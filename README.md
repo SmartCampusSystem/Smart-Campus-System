@@ -1,9 +1,7 @@
 
 # Smart Campus System - Setup Guide 🎓
 
-This guide will help you set up and run the Smart Campus project on your local machine. The project consists of a **Spring Boot** backend, a **MySQL** database, and a **React (Vite)** frontend.
-
----
+This guide will help you set up and run the Smart Campus project on your local machine. The project consists of a **Spring Boot** backend , a **MySQL** database , and a **React (Vite)** frontend.
 
 ## 🛠️ Step 1: Prepare Your Workspace
 
@@ -31,6 +29,8 @@ cd Smart-Campus-System
 
 ```
 
+
+
 ---
 
 ## 🗄️ Step 2: Database Setup (MySQL Workbench)
@@ -45,7 +45,13 @@ CREATE DATABASE smart_campus;
 ```
 
 
-3. **Configuration**: Navigate to `backend/src/main/resources/` and ensure your `application.properties` matches your Workbench credentials (username/password).
+3. **Configuration**:
+* Navigate to `backend/src/main/resources/`.
+* You will see `application.properties.example`.
+* **Copy** that file and rename the copy to **`application.properties`**.
+* Update the `username` and `password` inside `application.properties` to match your local MySQL credentials.
+
+
 
 ---
 
@@ -53,8 +59,7 @@ CREATE DATABASE smart_campus;
 
 This is the easiest way to run the Backend, Frontend, and Database all at once.
 
-1. **Build and Start Containers**:
-In the root directory (where the `docker-compose.yml` is located), run:
+1. **Build and Start Containers**: In the root directory (where the `docker-compose.yml` is located), run:
 ```bash
 docker-compose up --build
 
@@ -66,8 +71,6 @@ docker-compose up --build
 ---
 
 ## 💻 Step 4: Manual Setup (Alternative)
-
-If you don't want to use Docker, follow these steps:
 
 ### Running the Backend (Spring Boot)
 
@@ -96,16 +99,22 @@ npm run dev
 
 Once the services are running, you can access the UI:
 
-* **Login Page**: Go to `http://localhost:5173/`
-* **Admin Dashboard**: Go to `http://localhost:5173/admin`
-* **API Documentation**: `http://localhost:8080/swagger-ui.html` (if enabled).
+* **Landing Page**: `http://localhost:5173/`
+* 
+**Login Page**: `http://localhost:5173/login` 
+
+
+* 
+**Admin Dashboard**: `http://localhost:5173/admin` 
 
 ---
 
 ## 📝 Important Notes for Developers
 
-* **File Naming**: Always use `Login.jsx` (lowercase extension) for imports to avoid build errors.
+* **Resources Folder**: We have added the `src/main/resources` folder to the repository. Ensure you never commit your personal `application.properties` with passwords.
+* **File Naming**: Always use `Login.jsx` (lowercase extension) for imports to avoid build errors on different operating systems.
 * **Styling**: We use Tailwind CSS. For gradients, prefer the canonical `bg-linear-to-tr` class.
-* **Environment Variables**: Do not commit your `.env` or `application.properties` with real passwords. Use the provided `.example` files.
+* **Environment Variables**: Do not commit your `.env` or `application.properties`. Always update the `.example` files if you add new configurations.
 
 ---
+යක් නැතිව වැඩේ කරගෙන යන්න පුළුවන්. ඊළඟට අපි අර Member 01 ගේ **Login Function** එක (Security) හදන්න පටන් ගමුද?

@@ -1,4 +1,4 @@
-ඔබ අලුතින් කරපු වෙනස්කම් (Resources folder එක සහ `application.properties.example` එකතු කිරීම) ඇතුළත් කරලා, README එක තවත් පැහැදිලිව සකස් කරලා මෙන්න. මෙය ඔබේ ප්‍රධාන README එක ලෙස භාවිතා කරන්න.
+
 
 ---
 

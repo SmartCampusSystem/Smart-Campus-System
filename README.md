@@ -99,12 +99,8 @@ npm run dev
 
 Once the services are running, you can access the UI:
 
-* **Landing Page**: `http://localhost:5173/`
-* 
+**Landing Page**: `http://localhost:5173/`
 **Login Page**: `http://localhost:5173/login` 
-
-
-* 
 **Admin Dashboard**: `http://localhost:5173/admin` 
 
 ---

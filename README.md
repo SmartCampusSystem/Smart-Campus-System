@@ -1,3 +1,6 @@
+ඔබ අලුතින් කරපු වෙනස්කම් (Resources folder එක සහ `application.properties.example` එකතු කිරීම) ඇතුළත් කරලා, README එක තවත් පැහැදිලිව සකස් කරලා මෙන්න. මෙය ඔබේ ප්‍රධාන README එක ලෙස භාවිතා කරන්න.
+
+---
 
 # Smart Campus System - Setup Guide 🎓
 
@@ -99,9 +102,11 @@ npm run dev
 
 Once the services are running, you can access the UI:
 
-**Landing Page**: `http://localhost:5173/`
-**Login Page**: `http://localhost:5173/login` 
-**Admin Dashboard**: `http://localhost:5173/admin` 
+* **Landing Page**: `http://localhost:5173/`
+* **Login Page**: `http://localhost:5173/login` 
+* **Admin Dashboard**: `http://localhost:5173/admin` 
+
+
 
 ---
 
@@ -113,4 +118,5 @@ Once the services are running, you can access the UI:
 * **Environment Variables**: Do not commit your `.env` or `application.properties`. Always update the `.example` files if you add new configurations.
 
 ---
-යක් නැතිව වැඩේ කරගෙන යන්න පුළුවන්. ඊළඟට අපි අර Member 01 ගේ **Login Function** එක (Security) හදන්න පටන් ගමුද?
+
+ඔබේ teammates ලාට දැන් කිසිම කරදරයක් නැතිව වැඩේ කරගෙන යන්න පුළුවන්. ඊළඟට අපි අර Member 01 ගේ **Login Function** එක (Security) හදන්න පටන් ගමුද?

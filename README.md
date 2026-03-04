@@ -118,5 +118,3 @@ Once the services are running, you can access the UI:
 * **Environment Variables**: Do not commit your `.env` or `application.properties`. Always update the `.example` files if you add new configurations.
 
 ---
-
-ඔබේ teammates ලාට දැන් කිසිම කරදරයක් නැතිව වැඩේ කරගෙන යන්න පුළුවන්. ඊළඟට අපි අර Member 01 ගේ **Login Function** එක (Security) හදන්න පටන් ගමුද?

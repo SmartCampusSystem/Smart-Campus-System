@@ -1,120 +1,188 @@
+# 🎓 Smart Campus System – Setup Guide
 
+This guide will help you set up and run the **Smart Campus System** on your local machine.  
+The project includes:
+
+* 🧠 Spring Boot Backend  
+* 🗄️ MySQL Database  
+* ⚛️ React (Vite) Frontend  
 
 ---
 
-# Smart Campus System - Setup Guide 🎓
-
-This guide will help you set up and run the Smart Campus project on your local machine. The project consists of a **Spring Boot** backend , a **MySQL** database , and a **React (Vite)** frontend.
-
 ## 🛠️ Step 1: Prepare Your Workspace
 
-1. **Install Prerequisites**:
-* **Docker Desktop** (Highly recommended for easy setup).
-* **Git**.
-* **MySQL Workbench**.
-* **Node.js** (If running without Docker).
-* **Java 17+ & Maven** (If running without Docker).
+### ✅ Install Prerequisites
 
+Make sure you have the following installed:
 
-2. **Create a Project Folder**:
-Open your terminal and run:
+* Docker Desktop *(Recommended)*  
+* Git  
+* MySQL Workbench  
+* Node.js *(Required if not using Docker)*  
+* Java 23  
+* Maven  
+
+---
+
+### 📁 Create Project Folder
+
 ```bash
 mkdir MyProjects
 cd MyProjects
-
 ```
 
+---
 
-3. **Clone the Repository**:
+### 📥 Clone Repository
+
 ```bash
 git clone <your-repository-url>
 cd Smart-Campus-System
-
 ```
-
-
 
 ---
 
 ## 🗄️ Step 2: Database Setup (MySQL Workbench)
 
-Before running the application, you must prepare the database:
+Before running the application, prepare the database.
 
-1. Open **MySQL Workbench** and connect to your local instance.
-2. Create a new schema:
+### 🔹 Option 1: Local MySQL (Port 3306)
+
 ```sql
-CREATE DATABASE smart_campus;
-
+CREATE DATABASE smart_campus_db;
 ```
-
-
-3. **Configuration**:
-* Navigate to `backend/src/main/resources/`.
-* You will see `application.properties.example`.
-* **Copy** that file and rename the copy to **`application.properties`**.
-* Update the `username` and `password` inside `application.properties` to match your local MySQL credentials.
-
-
 
 ---
 
-## 🐳 Step 3: Running with Docker (Recommended)
+### 🔹 Option 2: Docker MySQL (Port 3307)
 
-This is the easiest way to run the Backend, Frontend, and Database all at once.
+* Database will run automatically via Docker  
+* Connect using MySQL Workbench on port **3307**  
 
-1. **Build and Start Containers**: In the root directory (where the `docker-compose.yml` is located), run:
-```bash
-docker-compose up --build
+---
+
+### ⚙️ Configuration
+
+Update the file:
 
 ```
+backend/src/main/resources/application.properties
+```
 
+```properties
+spring.datasource.url=jdbc:mysql://localhost:3307/smart_campus_db?createDatabaseIfNotExist=true
+```
 
-2. **Wait for completion**: Docker will pull images, compile the Java code, and install React dependencies automatically.
+---
+
+## 🐳 Step 3: Run with Docker (Recommended)
+
+This runs **backend + frontend + database together**.
+
+```bash
+docker-compose up --build
+```
+
+### ⏳ What happens:
+
+* Pulls required images  
+* Builds Spring Boot app  
+* Installs frontend dependencies  
 
 ---
 
 ## 💻 Step 4: Manual Setup (Alternative)
 
-### Running the Backend (Spring Boot)
+### ▶️ Run Backend (Spring Boot)
 
 ```bash
 cd backend
 ./mvnw spring-boot:run
-
 ```
 
-*The backend will start at `http://localhost:8080`.*
+📍 Backend runs on:
 
-### Running the Frontend (React)
+```
+http://localhost:8082
+```
+
+---
+
+### ▶️ Run Frontend (React)
 
 ```bash
 cd frontend
 npm install
 npm run dev
-
 ```
 
-*The frontend will start at `http://localhost:5173`.*
+📍 Frontend runs on:
+
+```
+http://localhost:5173
+```
 
 ---
 
-## 🖥️ Step 5: Viewing the Application
+## 🖥️ Step 5: Access the Application
 
-Once the services are running, you can access the UI:
-
-* **Landing Page**: `http://localhost:5173/`
-* **Login Page**: `http://localhost:5173/login` 
-* **Admin Dashboard**: `http://localhost:5173/admin` 
-
-
+| Page          | URL                                      |
+| ------------- | ---------------------------------------- |
+| Landing Page  | http://localhost:5173                    |
+| Login Page    | http://localhost:5173/login              |
+| Register Page | http://localhost:5173/register           |
+| Dashboard     | http://localhost:5173/dashboard          |
 
 ---
 
-## 📝 Important Notes for Developers
+## 📝 Important Notes
 
-* **Resources Folder**: We have added the `src/main/resources` folder to the repository. Ensure you never commit your personal `application.properties` with passwords.
-* **File Naming**: Always use `Login.jsx` (lowercase extension) for imports to avoid build errors on different operating systems.
-* **Styling**: We use Tailwind CSS. For gradients, prefer the canonical `bg-linear-to-tr` class.
-* **Environment Variables**: Do not commit your `.env` or `application.properties`. Always update the `.example` files if you add new configurations.
+### 🔐 Authentication
+
+* Google OAuth 2.0  
+* Email & Password login  
+
+---
+
+### 👥 Role Management
+
+Default roles:
+
+* `USER`  
+* `ADMIN`  
+* `TECHNICIAN`  
+
+---
+
+### 🔌 Port Configuration
+
+| Service | Port                            |
+| ------- | ------------------------------- |
+| Backend | 8082                            |
+| MySQL   | 3307 (Docker) → 3306 (Internal) |
+
+---
+
+### ⚠️ Environment Variables
+
+* Do **NOT** commit:
+  * `.env`  
+  * `application.properties`  
+
+* Always update `.example` files when adding new configs  
+
+---
+
+### 🧾 Auditability
+
+* `users` table includes:
+  * `created_at` timestamp for tracking and auditing  
+
+---
+
+## 🚀 You're Ready!
+
+Your Smart Campus System should now be up and running 🎉  
+If you face issues, check logs or verify your ports and configurations.
 
 ---

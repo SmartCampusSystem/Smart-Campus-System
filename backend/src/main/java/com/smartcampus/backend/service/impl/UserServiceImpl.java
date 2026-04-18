@@ -29,12 +29,12 @@ public class UserServiceImpl implements UserService {
 
         return org.springframework.security.core.userdetails.User.builder()
                 .username(user.getEmail())
-                .password(user.getPassword())
+                .password(user.getPassword() != null ? user.getPassword() : "") // Google users ලට password නැති නිසා
                 .roles(user.getRole().name())
                 .build();
     }
 
-    // 1. OAuth 2.0 Registration/Login (Email filter එක ඇතුළත් කර ඇත)
+    // 1. OAuth 2.0 Registration/Login
     @Override
     public UserDTO processOAuthPostLogin(String email, String name, String picture, String providerId) {
         User user = userRepository.findByEmail(email).orElseGet(() -> {
@@ -45,7 +45,6 @@ public class UserServiceImpl implements UserService {
             newUser.setProviderId(providerId);
             newUser.setProvider("GOOGLE");
 
-            // Email එක අනුව Role එක තීරණය කිරීම
             String lowerEmail = email.toLowerCase();
             if (lowerEmail.endsWith("@admin.smartcampus.com")) {
                 newUser.setRole(Role.ADMIN);
@@ -60,7 +59,7 @@ public class UserServiceImpl implements UserService {
         return mapToDTO(user);
     }
 
-    // 2. Local Registration (Email filter එක ඇතුළත් කර ඇත)
+    // 2. Local Registration
     @Override
     public UserDTO registerLocalUser(User user) {
         if (userRepository.findByEmail(user.getEmail()).isPresent()) {
@@ -70,7 +69,6 @@ public class UserServiceImpl implements UserService {
         user.setPassword(passwordEncoder.encode(user.getPassword()));
         user.setProvider("LOCAL");
 
-        // Email එක අනුව Role එක තීරණය කිරීම
         String lowerEmail = user.getEmail().toLowerCase();
         if (lowerEmail.endsWith("@admin.smartcampus.com")) {
             user.setRole(Role.ADMIN);
@@ -83,8 +81,9 @@ public class UserServiceImpl implements UserService {
         return mapToDTO(userRepository.save(user));
     }
 
+    // Long id වෙනුවට String id භාවිතා කරන ලදී
     @Override
-    public UserDTO getUserById(Long id) {
+    public UserDTO getUserById(String id) {
         User user = userRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("User not found"));
         return mapToDTO(user);
@@ -104,22 +103,24 @@ public class UserServiceImpl implements UserService {
                 .collect(Collectors.toList());
     }
 
+    // Long id වෙනුවට String id භාවිතා කරන ලදී
     @Override
-    public UserDTO updateUserRole(Long id, String role) {
+    public UserDTO updateUserRole(String id, String role) {
         User user = userRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("User not found"));
         user.setRole(Role.valueOf(role.toUpperCase()));
         return mapToDTO(userRepository.save(user));
     }
 
+    // Long id වෙනුවට String id භාවිතා කරන ලදී
     @Override
-    public void deleteUser(Long id) {
+    public void deleteUser(String id) {
         userRepository.deleteById(id);
     }
 
     private UserDTO mapToDTO(User user) {
         UserDTO dto = new UserDTO();
-        dto.setId(user.getId());
+        dto.setId(user.getId()); // මෙහි user.getId() දැන් ලබා දෙන්නේ String එකකි
         dto.setName(user.getName());
         dto.setEmail(user.getEmail());
         dto.setPicture(user.getPicture());

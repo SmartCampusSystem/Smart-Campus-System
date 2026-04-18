@@ -9,11 +9,11 @@ import java.time.LocalDateTime;
 @NoArgsConstructor
 @AllArgsConstructor
 public class UserDTO {
-    private Long id;
+    private String id;        // Long ඉඳන් String වලට මාරු කළා (MongoDB ID එකට ගැලපෙන්න)
     private String name;
     private String email;
     private String picture;
-    private String role;     // ADMIN, USER, TECHNICIAN [cite: 49]
-    private String provider; // LOCAL හෝ GOOGLE
-    private LocalDateTime createdAt; // Auditability සඳහා 
+    private String role; 
+    private String provider; 
+    private LocalDateTime createdAt; 
 }

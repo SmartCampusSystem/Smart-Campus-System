@@ -20,8 +20,7 @@ public class UserController {
     private UserService userService;
 
     /**
-     * 1. GET /me - දැනට ලොග් වී සිටින පරිශීලකයා ලබා ගැනීම (OAuth සහ Local දෙකටම)
-     * Rubric Requirement: Proper session management
+     * 1. GET /me - දැනට ලොග් වී සිටින පරිශීලකයා ලබා ගැනීම
      */
     @GetMapping("/me")
     public ResponseEntity<UserDTO> getCurrentUser(Authentication authentication) {
@@ -30,13 +29,10 @@ public class UserController {
         }
 
         String email;
-        // Google OAuth හරහා ලොග් වී ඇත්නම්
         if (authentication.getPrincipal() instanceof OAuth2User) {
             OAuth2User oAuth2User = (OAuth2User) authentication.getPrincipal();
             email = oAuth2User.getAttribute("email");
-        } 
-        // Local Login හරහා ලොග් වී ඇත්නම් (Spring Security Principal)
-        else {
+        } else {
             email = authentication.getName();
         }
 
@@ -49,8 +45,7 @@ public class UserController {
     }
 
     /**
-     * අලුතින් එකතු කළ කොටස: GET /by-email?email=...
-     * Frontend එකේ login එකෙන් පසු Role එක දැන ගැනීමට මෙය භාවිතා කරයි.
+     * GET /by-email?email=...
      */
     @GetMapping("/by-email")
     public ResponseEntity<UserDTO> getUserByEmail(@RequestParam("email") String email) {
@@ -62,28 +57,28 @@ public class UserController {
         }
     }
 
-    // 2. GET - සියලුම පරිශීලකයන් ලබා ගැනීම (Admin පමණි)
+    // 2. GET - සියලුම පරිශීලකයන් ලබා ගැනීම
     @GetMapping
     public List<UserDTO> getAllUsers() {
         return userService.getAllUsers();
     }
 
-    // 3. GET - ID එක මගින් සෙවීම
+    // 3. GET - ID එක මගින් සෙවීම (Long id -> String id ලෙස වෙනස් කරන ලදී)
     @GetMapping("/{id}")
-    public ResponseEntity<UserDTO> getUserById(@PathVariable Long id) {
+    public ResponseEntity<UserDTO> getUserById(@PathVariable String id) {
         return ResponseEntity.ok(userService.getUserById(id));
     }
 
-    // 4. PUT - User Role වෙනස් කිරීම (Admin පමණි)
+    // 4. PUT - User Role වෙනස් කිරීම (Long id -> String id ලෙස වෙනස් කරන ලදී)
     @PutMapping("/{id}/role")
-    public ResponseEntity<UserDTO> updateRole(@PathVariable Long id, @RequestBody String role) {
+    public ResponseEntity<UserDTO> updateRole(@PathVariable String id, @RequestBody String role) {
         String cleanRole = role.replace("\"", "").trim(); 
         return ResponseEntity.ok(userService.updateUserRole(id, cleanRole));
     }
 
-    // 5. DELETE - පරිශීලකයෙකු ඉවත් කිරීම
+    // 5. DELETE - පරිශීලකයෙකු ඉවත් කිරීම (Long id -> String id ලෙස වෙනස් කරන ලදී)
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deleteUser(@PathVariable Long id) {
+    public ResponseEntity<Void> deleteUser(@PathVariable String id) {
         userService.deleteUser(id);
         return ResponseEntity.noContent().build();
     }

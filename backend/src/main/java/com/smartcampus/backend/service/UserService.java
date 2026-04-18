@@ -2,7 +2,7 @@ package com.smartcampus.backend.service;
 
 import com.smartcampus.backend.dto.UserDTO;
 import com.smartcampus.backend.model.User;
-import org.springframework.security.core.userdetails.UserDetailsService; // මෙය අලුතින් එකතු විය යුතුය
+import org.springframework.security.core.userdetails.UserDetailsService;
 import java.util.List;
 
 // Member 4: Local Login වැඩ කිරීමට UserDetailsService අනිවාර්ය වේ
@@ -18,8 +18,12 @@ public interface UserService extends UserDetailsService {
     UserDTO getUserByEmail(String email);
 
     // --- User Management Methods ---
-    UserDTO getUserById(Long id);
+    // Long id වෙනුවට String id භාවිතා කරන ලදී (MongoDB ගැලපුම සඳහා)
+    UserDTO getUserById(String id);
+    
     List<UserDTO> getAllUsers();
-    UserDTO updateUserRole(Long id, String role);
-    void deleteUser(Long id);
+    
+    UserDTO updateUserRole(String id, String role);
+    
+    void deleteUser(String id);
 }

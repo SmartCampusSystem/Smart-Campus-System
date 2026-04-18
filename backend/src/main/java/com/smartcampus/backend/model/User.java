@@ -1,41 +1,36 @@
 package com.smartcampus.backend.model;
 
-import jakarta.persistence.*;
 import lombok.*;
-import org.hibernate.annotations.CreationTimestamp;
+import org.springframework.data.annotation.Id;
+import org.springframework.data.mongodb.core.index.Indexed;
+import org.springframework.data.mongodb.core.mapping.Document;
+import org.springframework.data.annotation.CreatedDate;
 import java.time.LocalDateTime;
 
-@Entity
-@Table(name = "users")
+@Document(collection = "users") // MySQL වල @Table වෙනුවට
 @Getter @Setter
 @NoArgsConstructor
 @AllArgsConstructor
 public class User {
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
 
-    @Column(nullable = false)
+    @Id // MongoDB වල ID එක සාමාන්‍යයෙන් String එකක් (ObjectId) ලෙස තබා ගැනීම වඩාත් සුදුසුයි
+    private String id;
+
     private String name;
 
-    @Column(nullable = false, unique = true)
+    @Indexed(unique = true) // MySQL වල unique = true වෙනුවට
     private String email;
 
-    @Column(nullable = true) // Google users ලට password එකක් නැති නිසා මෙය nullable විය යුතුයි
-    private String password;
+    private String password; // Google users ලට password එකක් නැති නිසා මෙය nullable විය හැකියි
 
     private String picture;
 
-    @Enumerated(EnumType.STRING)
-    @Column(nullable = false)
-    private Role role; // ADMIN, USER, TECHNICIAN [cite: 49]
+    private Role role; // ADMIN, USER, TECHNICIAN
 
-    @Column(nullable = false)
-    private String provider; // LOCAL හෝ GOOGLE (මෙය login එක හඳුනා ගැනීමට වැදගත්)
+    private String provider; // LOCAL හෝ GOOGLE
 
     private String providerId; // Google 'sub' ID එක
 
-    @CreationTimestamp
-    @Column(updatable = false)
-    private LocalDateTime createdAt; // Auditability සඳහා 
+    @CreatedDate // Hibernate @CreationTimestamp වෙනුවට Spring Data MongoDB Annotation එක
+    private LocalDateTime createdAt; 
 }

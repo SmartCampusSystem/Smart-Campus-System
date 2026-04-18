@@ -1,37 +1,16 @@
 version: '3.8'
 
 services:
-  db:
-    image: mysql:8.0
-    container_name: mysql-db
-    restart: always
-    environment:
-      MYSQL_DATABASE: smart_campus_db
-      MYSQL_ALLOW_EMPTY_PASSWORD: "yes"
-    ports:
-      - "3307:3306"
-    
-    volumes:
-      - mysql_data:/var/lib/mysql
-    healthcheck:
-      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
+  # MySQL service එක සම්පූර්ණයෙන්ම අයින් කර ඇත (Cloud MongoDB පාවිච්චි කරන නිසා)
 
   backend:
     build: ./backend
     container_name: spring-backend
     ports:
-      - "8081:8081"
-    depends_on:
-      db:
-        condition: service_healthy
+      - "8082:8082" # Spring Boot port එක 8082 නිසා
     environment:
-      SPRING_DATASOURCE_URL: jdbc:mysql://db:3306/smart_campus_db
-      SPRING_DATASOURCE_USERNAME: root
-      SPRING_DATASOURCE_PASSWORD: ""
-      SPRING_JPA_HIBERNATE_DDL_AUTO: update
+      # මෙතනට ඔයාගේ Atlas URI එක ඇතුළත් කරන ලදී
+      - SPRING_DATA_MONGODB_URI=mongodb+srv://it23600898_smart_db:SmartCampus123@cluster0.mg148jy.mongodb.net/smart_campus_db?retryWrites=true&w=majority&appName=Cluster0
 
   frontend:
     build: ./frontend
@@ -39,9 +18,8 @@ services:
     ports:
       - "5173:5173"
     env_file:
-    - ./frontend/.env
+      - ./frontend/.env
     depends_on:
       - backend
 
-volumes:
-  mysql_data:
+# පරණ mysql_data volume එක අවශ්‍ය නැති නිසා ඉවත් කරන ලදී

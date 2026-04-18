@@ -55,10 +55,10 @@ public class WebSecurityConfig {
                 // 1. මේ ලිපින ඕනෑම කෙනෙකුට විවෘතයි
                 .requestMatchers("/", "/login**", "/error**", "/oauth2/**", "/api/auth/**", "/api/users/by-email").permitAll() 
                 
-                // 2. පරිශීලකයාට තමන්ගේ තොරතුරු බැලීමට (Authenticated users only)
+                // 2. පරිශීලකයාට තමන්ගේ තොරතුරු බැලීමට
                 .requestMatchers("/api/users/me").authenticated()
                 
-                // 3. Admin ලට පමණක් විවෘත ලිපින (මෙතන පිළිවෙල වැදගත්)
+                // 3. Admin ලට පමණක් විවෘත ලිපින
                 .requestMatchers("/api/admin/**").hasRole("ADMIN")
                 .requestMatchers("/api/users/**").hasRole("ADMIN") 
                 
@@ -94,6 +94,7 @@ public class WebSecurityConfig {
                 .invalidateHttpSession(true)
                 .clearAuthentication(true)
                 .deleteCookies("JSESSIONID")
+                .deleteCookies("remember-me")
             );
 
         return http.build();
@@ -102,7 +103,6 @@ public class WebSecurityConfig {
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
-        // Frontend Ports දෙකම මෙහි ඇත
         configuration.setAllowedOrigins(Arrays.asList("http://localhost:5173", "http://localhost:5174"));
         configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS"));
         configuration.setAllowedHeaders(Arrays.asList("Authorization", "Cache-Control", "Content-Type", "Accept"));

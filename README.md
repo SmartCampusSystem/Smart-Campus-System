@@ -1,11 +1,15 @@
 # 🎓 Smart Campus System – Setup Guide
 
-This guide will help you set up and run the **Smart Campus System** on your local machine.  
-The project includes:
+This guide will help you set up and run the **Smart Campus System** on your local machine.
+The project has been migrated to a **Cloud-based NoSQL architecture** for better scalability and shared data access.
 
-* 🧠 Spring Boot Backend  
-* 🗄️ MySQL Database  
-* ⚛️ React (Vite) Frontend  
+---
+
+## 📦 Project Includes
+
+* 🧠 Spring Boot 3.x Backend
+* ☁️ MongoDB Atlas (Cloud Database)
+* ⚛️ React (Vite) Frontend
 
 ---
 
@@ -15,25 +19,15 @@ The project includes:
 
 Make sure you have the following installed:
 
-* Docker Desktop *(Recommended)*  
-* Git  
-* MySQL Workbench  
-* Node.js *(Required if not using Docker)*  
-* Java 23  
-* Maven  
+* Java 23 (JDK)
+* Node.js (v18 or higher)
+* Docker Desktop (For containerized deployment)
+* Git
+* Maven *(Optional – `./mvnw` wrapper included)*
 
 ---
 
-### 📁 Create Project Folder
-
-```bash
-mkdir MyProjects
-cd MyProjects
-```
-
----
-
-### 📥 Clone Repository
+## 📥 Clone Repository
 
 ```bash
 git clone <your-repository-url>
@@ -42,42 +36,29 @@ cd Smart-Campus-System
 
 ---
 
-## 🗄️ Step 2: Database Setup (MySQL Workbench)
+## 🗄️ Step 2: Database Configuration (MongoDB Atlas)
 
-Before running the application, prepare the database.
+The system now uses **MongoDB Atlas** instead of MySQL.
+No local database installation is required.
 
-### 🔹 Option 1: Local MySQL (Port 3306)
+### ⚙️ Backend Configuration
 
-```sql
-CREATE DATABASE smart_campus_db;
-```
-
----
-
-### 🔹 Option 2: Docker MySQL (Port 3307)
-
-* Database will run automatically via Docker  
-* Connect using MySQL Workbench on port **3307**  
-
----
-
-### ⚙️ Configuration
-
-Update the file:
+Update the following file:
 
 ```
 backend/src/main/resources/application.properties
 ```
 
 ```properties
-spring.datasource.url=jdbc:mysql://localhost:3307/smart_campus_db?createDatabaseIfNotExist=true
+# MongoDB Atlas Connection
+spring.data.mongodb.uri=mongodb+srv://it23600898_smart_db:<password>@cluster0.mg148jy.mongodb.net/smart_campus_db?retryWrites=true&w=majority
 ```
+
+> ⚠️ Replace `<password>` with your actual Atlas database user password.
 
 ---
 
 ## 🐳 Step 3: Run with Docker (Recommended)
-
-This runs **backend + frontend + database together**.
 
 ```bash
 docker-compose up --build
@@ -85,9 +66,9 @@ docker-compose up --build
 
 ### ⏳ What happens:
 
-* Pulls required images  
-* Builds Spring Boot app  
-* Installs frontend dependencies  
+* Builds the Spring Boot executable
+* Containerizes the React frontend
+* Connects the backend to MongoDB Atlas
 
 ---
 
@@ -97,14 +78,11 @@ docker-compose up --build
 
 ```bash
 cd backend
+./mvnw clean install -DskipTests
 ./mvnw spring-boot:run
 ```
 
-📍 Backend runs on:
-
-```
-http://localhost:8082
-```
+📍 Backend runs on: **http://localhost:8082**
 
 ---
 
@@ -116,22 +94,18 @@ npm install
 npm run dev
 ```
 
-📍 Frontend runs on:
-
-```
-http://localhost:5173
-```
+📍 Frontend runs on: **http://localhost:5173**
 
 ---
 
 ## 🖥️ Step 5: Access the Application
 
-| Page          | URL                                      |
-| ------------- | ---------------------------------------- |
-| Landing Page  | http://localhost:5173                    |
-| Login Page    | http://localhost:5173/login              |
-| Register Page | http://localhost:5173/register           |
-| Dashboard     | http://localhost:5173/dashboard          |
+| Page          | URL                             |
+| ------------- | ------------------------------- |
+| Landing Page  | http://localhost:5173           |
+| Login Page    | http://localhost:5173/login     |
+| Register Page | http://localhost:5173/register  |
+| Dashboard     | http://localhost:5173/dashboard |
 
 ---
 
@@ -139,50 +113,40 @@ http://localhost:5173
 
 ### 🔐 Authentication
 
-* Google OAuth 2.0  
-* Email & Password login  
+* Google OAuth 2.0 integration
+* Email & Password login with BCrypt encryption
 
 ---
 
 ### 👥 Role Management
 
-Default roles:
+Users are assigned roles upon registration:
 
-* `USER`  
-* `ADMIN`  
-* `TECHNICIAN`  
+* ROLE_USER
+* ROLE_ADMIN
+* ROLE_TECHNICIAN
 
 ---
 
 ### 🔌 Port Configuration
 
-| Service | Port                            |
-| ------- | ------------------------------- |
-| Backend | 8082                            |
-| MySQL   | 3307 (Docker) → 3306 (Internal) |
-
----
-
-### ⚠️ Environment Variables
-
-* Do **NOT** commit:
-  * `.env`  
-  * `application.properties`  
-
-* Always update `.example` files when adding new configs  
+* Backend: **8082**
+* Frontend: **5173**
+* Database: Cloud-hosted (Atlas uses port 27017 internally)
 
 ---
 
 ### 🧾 Auditability
 
-* `users` table includes:
-  * `created_at` timestamp for tracking and auditing  
+The `users` collection in MongoDB includes:
+
+* `_id`: Managed as a String (UUID/ObjectId)
+* `createdAt`: Automatically generated via `@EnableMongoAuditing`
 
 ---
 
 ## 🚀 You're Ready!
 
-Your Smart Campus System should now be up and running 🎉  
-If you face issues, check logs or verify your ports and configurations.
+Your **Smart Campus System** should now be up and running 🎉
 
----
+Since the database is cloud-based, any data you add will be visible to all contributors.

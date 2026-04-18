@@ -1,7 +1,12 @@
 import React from 'react';
 import Navbar from '../../components/Navbar';
 import Hero from '../../components/Hero';
-import StatCard from '../../components/StatCard';
+import Features from '../../components/Features';
+import WorkFlow from '../../components/WorkFlow';
+import TechShowcase from '../../components/TechShowcase';
+import StatsSection from '../../components/Stats';
+// import FinalCTA from '../../components/FinalCTA';
+import Footer from '../../components/Footer';
 
 const Home = () => {
   const stats = [
@@ -15,13 +20,13 @@ const Home = () => {
       <Navbar />
       <main className="max-w-7xl mx-auto px-4">
         <Hero />
+        <Features/>
+        <WorkFlow/>
+        <StatsSection/>
+        <TechShowcase/>
+        {/* <FinalCTA/> */}
+        <Footer/>
         
-        {/* Features/Stats Grid */}
-        <div id="features" className="grid grid-cols-1 md:grid-cols-3 gap-8 py-12">
-          {stats.map((item, index) => (
-            <StatCard key={index} {...item} />
-          ))}
-        </div>
       </main>
     </div>
   );

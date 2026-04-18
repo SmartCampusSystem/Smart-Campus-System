@@ -9,7 +9,7 @@ services:
       MYSQL_DATABASE: smart_campus_db
       MYSQL_ALLOW_EMPTY_PASSWORD: "yes"
     ports:
-      - "3306:3306"
+      - "3307:3306"
     
     volumes:
       - mysql_data:/var/lib/mysql

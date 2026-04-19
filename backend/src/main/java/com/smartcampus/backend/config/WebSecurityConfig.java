@@ -53,7 +53,7 @@ public class WebSecurityConfig {
             .authenticationProvider(authenticationProvider())
             .authorizeHttpRequests(auth -> auth
                 // 1. මේ ලිපින ඕනෑම කෙනෙකුට විවෘතයි
-                .requestMatchers("/", "/login**", "/error**", "/oauth2/**", "/api/auth/**", "/api/users/by-email").permitAll() 
+                .requestMatchers("/", "/login**", "/error**", "/oauth2/**", "/api/auth/**", "/api/users/by-email", "/api/resources/**" , "/api/bookings/**").permitAll() 
                 
                 // 2. පරිශීලකයාට තමන්ගේ තොරතුරු බැලීමට
                 .requestMatchers("/api/users/me").authenticated()

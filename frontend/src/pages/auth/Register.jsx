@@ -38,6 +38,14 @@ function Register() {
 
       if (response.ok) {
         toast.success('Registration Successful!');
+        
+        // --- Navbar එකට දැනුම් දීම (Auth Change) ---
+        // සාමාන්‍යයෙන් register වුණාම token එකක් ලැබෙන්නේ නැති නිසා මෙතනදී login එකට navigate කරනවා.
+        // නමුත් පද්ධතියේ වෙනසක් වුණ බව දැනුම් දීමට event එක trigger කරනවා.
+        window.dispatchEvent(new Event("authChange"));
+        window.dispatchEvent(new Event("storage"));
+        // ----------------------------------------
+
         navigate('/login');
       } else {
         const errorText = await response.text();

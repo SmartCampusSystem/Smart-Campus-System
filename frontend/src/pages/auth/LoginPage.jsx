@@ -37,12 +37,28 @@ function Login() {
 
         if (userDetailsResponse.ok) {
           const userData = await userDetailsResponse.json();
+
+          // --- Navbar එක update වීමට අවශ්‍ය දත්ත මෙතනදී save කරනවා ---
+          localStorage.setItem('token', 'authenticated_session'); // ඕනෑම string එකක් (token එකක් නැති නිසා)
+          localStorage.setItem('user', JSON.stringify(userData));
+          
+          // Navbar එකට මේ වෙනස වහාම හඳුනාගැනීමට "storage" event එකක් යවනවා
+          window.dispatchEvent(new Event("storage"));
+          // -------------------------------------------------------
+
           toast.success(`Welcome back, ${userData.name}!`);
           if (userData.role === 'ADMIN') navigate('/admin/*');
           else if (userData.role === 'TECHNICIAN') navigate('/tech/dashboard');
           else navigate('/');
-        } else { navigate('/'); }
-      } else { toast.error('Access denied. Please check credentials.'); }
+        } else { 
+          // User details ගන්න බැරි වුණත්, login සාර්ථක නම් token එක දානවා
+          localStorage.setItem('token', 'authenticated_session');
+          window.dispatchEvent(new Event("storage"));
+          navigate('/'); 
+        }
+      } else { 
+        toast.error('Access denied. Please check credentials.'); 
+      }
     } catch (error) {
       toast.error('Server connection failed.');
     } finally { setLoading(false); }

@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { 
   Calendar, Clock, AlignLeft, Users, 
-  ArrowLeft, CheckCircle2, AlertCircle, Loader2, Sparkles 
+  ArrowLeft, CheckCircle2, Loader2, Sparkles 
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 
@@ -39,7 +39,7 @@ const BookResource = () => {
   const handleBooking = async (e) => {
     e.preventDefault();
 
-    // 1. කාල පරාසය වලංගු දැයි පරීක්ෂා කිරීම (Client-side validation)
+    // 1. කාල පරාසය වලංගු දැයි පරීක්ෂා කිරීම
     const start = new Date(bookingData.startTime);
     const end = new Date(bookingData.endTime);
 
@@ -50,30 +50,19 @@ const BookResource = () => {
 
     setLoading(true);
 
-    // 2. Local Storage එකෙන් user විස්තර ලබා ගැනීම
-    const userJson = localStorage.getItem('user');
-    const user = userJson ? JSON.parse(userJson) : null;
-
-    if (!user || !user.email) {
-      toast.error("Please login to continue");
-      navigate('/login');
-      return;
-    }
-
-    // 3. Backend එකට අවශ්‍ය දත්ත සකස් කිරීම
+    // 2. Backend එකට අවශ්‍ය දත්ත සකස් කිරීම
+    // 🛑 වැදගත්: userEmail යැවීම අවශ්‍ය නැත. Backend එකේ Principal මගින් එය ලබා ගනී.
     const payload = {
       resourceId: id,
-      userEmail: user.email, 
       startTime: bookingData.startTime, 
       endTime: bookingData.endTime,
       purpose: bookingData.purpose,
-      expectedAttendees: parseInt(bookingData.expectedAttendees), 
-      status: "PENDING" 
+      expectedAttendees: parseInt(bookingData.expectedAttendees)
     };
 
     try {
-      // මෙහිදී 'api' (axiosInstance) භාවිතා කරන බව තහවුරු කර ගන්න
-      const response = await api.post('/bookings', payload);
+      // AxiosInstance (api) හරහා request එක යැවීම
+      await api.post('/bookings', payload);
       
       toast.success("Booking Request Sent Successfully!", { icon: '🎉' });
       
@@ -81,10 +70,19 @@ const BookResource = () => {
       setTimeout(() => navigate('/my-bookings'), 1500);
 
     } catch (err) {
-      // Backend එකේ ඇති Conflict Checking logic එකෙන් එන පණිවිඩය පෙන්වීම
-      const errorMsg = err.response?.data || "Booking failed. Check for time conflicts.";
-      toast.error(errorMsg, { id: 'booking-error' });
       console.error("Booking Error:", err);
+      
+      // 🛑 Backend එකෙන් එන Error පණිවිඩය නිවැරදිව හසුරුවා ගැනීම
+      if (err.response?.status === 401) {
+        toast.error("සැසිය අවසන් වී ඇත. කරුණාකර නැවත ලොග් වන්න.");
+        navigate('/login');
+      } else {
+        // Backend එකේ RuntimeException පණිවිඩය ලබා ගැනීම
+        const errorMsg = typeof err.response?.data === 'string' 
+          ? err.response.data 
+          : "Booking failed. Check for time conflicts.";
+        toast.error(errorMsg);
+      }
     } finally {
       setLoading(false);
     }
@@ -96,7 +94,6 @@ const BookResource = () => {
       <div className="h-32"></div>
 
       <div className="max-w-4xl mx-auto px-6 pb-20">
-        {/* Back Button */}
         <button 
           onClick={() => navigate(-1)} 
           className="flex items-center gap-2 text-[#0c5252]/60 hover:text-[#0c5252] font-bold text-xs uppercase tracking-widest mb-8 transition-colors group"
@@ -105,7 +102,6 @@ const BookResource = () => {
         </button>
 
         <div className="grid lg:grid-cols-5 gap-8">
-          {/* Info Card */}
           <div className="lg:col-span-2 space-y-6">
             <div className="bg-[#0c5252] rounded-[32px] p-8 text-white shadow-2xl relative overflow-hidden">
               <div className="absolute top-[-10%] right-[-10%] w-32 h-32 bg-white/10 rounded-full blur-2xl"></div>
@@ -129,7 +125,6 @@ const BookResource = () => {
             </div>
           </div>
 
-          {/* Booking Form */}
           <div className="lg:col-span-3">
             <div className="bg-white rounded-[32px] p-10 shadow-xl border border-slate-100">
               <form onSubmit={handleBooking} className="space-y-6">

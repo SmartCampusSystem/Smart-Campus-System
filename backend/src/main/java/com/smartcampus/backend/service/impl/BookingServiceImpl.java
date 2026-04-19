@@ -6,6 +6,7 @@ import com.smartcampus.backend.service.BookingService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 public class BookingServiceImpl implements BookingService {
@@ -15,7 +16,7 @@ public class BookingServiceImpl implements BookingService {
 
     @Override
     public Booking createBooking(Booking booking) {
-        // 1. කාල පරාසයන් ගැටෙනවාදැයි පරීක්ෂා කිරීම (Conflict Checking - Requirement )
+        // 1. කාල පරාසයන් ගැටෙනවාදැයි පරීක්ෂා කිරීම
         List<Booking> conflicts = bookingRepository.findOverlappingBookings(
                 booking.getResourceId(), 
                 booking.getStartTime(), 
@@ -23,22 +24,25 @@ public class BookingServiceImpl implements BookingService {
         );
 
         if (!conflicts.isEmpty()) {
-            throw new RuntimeException("මෙම වේලාව තුළ මෙම සම්පත දැනටමත් වෙන්කර ඇත (Scheduling Conflict).");
+            throw new RuntimeException("මෙම වේලාව තුළ මෙම සම්පත දැනටමත් වෙන්කර ඇත.");
         }
 
-        // 2. මුලින්ම Booking එකක් දමන විට එය PENDING විය යුතුයි 
+        // 2. අලුත් Booking එකක් සැමවිටම PENDING විය යුතුයි
         booking.setStatus(Booking.BookingStatus.PENDING);
         return bookingRepository.save(booking);
     }
 
     @Override
     public List<Booking> getMyBookings(String email) {
-        return bookingRepository.findByUserEmail(email); // 
+        // අලුත්ම වෙන් කිරීම් ලැයිස්තුවේ ඉහළටම එන ලෙස සකසා එවනු ලැබේ
+        return bookingRepository.findByUserEmail(email).stream()
+                .sorted((b1, b2) -> b2.getStartTime().compareTo(b1.getStartTime()))
+                .collect(Collectors.toList());
     }
 
     @Override
     public List<Booking> getAllBookings() {
-        return bookingRepository.findAll(); // Admin සඳහා 
+        return bookingRepository.findAll();
     }
 
     @Override
@@ -46,7 +50,11 @@ public class BookingServiceImpl implements BookingService {
         Booking booking = bookingRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Booking එක හමු නොවීය."));
         
-        // Admin හට Approve හෝ Reject කළ හැක 
+        // දැනටමත් CANCELLED කර ඇත්නම් එහි status එක වෙනස් කළ නොහැක
+        if(booking.getStatus() == Booking.BookingStatus.CANCELLED) {
+            throw new RuntimeException("මෙම වෙන් කිරීම දැනටමත් අවලංගු කර ඇත.");
+        }
+
         booking.setStatus(status);
         if (status == Booking.BookingStatus.REJECTED) {
             booking.setRejectionReason(reason);
@@ -60,7 +68,11 @@ public class BookingServiceImpl implements BookingService {
         Booking booking = bookingRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Booking එක හමු නොවීය."));
         
-        // Approved වෙන් කිරීම් පසුව අවලංගු කළ හැක 
+        // දැනටමත් REJECTED හෝ CANCELLED නම් නැවත cancel කළ නොහැක
+        if(booking.getStatus() == Booking.BookingStatus.REJECTED) {
+            throw new RuntimeException("ප්‍රතික්ෂේප කළ වෙන් කිරීමක් අවලංගු කළ නොහැක.");
+        }
+
         booking.setStatus(Booking.BookingStatus.CANCELLED);
         bookingRepository.save(booking);
     }

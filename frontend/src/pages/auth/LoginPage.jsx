@@ -1,7 +1,11 @@
 import React, { useState } from 'react';
-import { Mail, Lock, Loader2, Eye, EyeOff, ArrowRight, ShieldCheck, Zap, Fingerprint, Activity } from 'lucide-react';
+import { Mail, Lock, Loader2, Eye, EyeOff, ArrowRight, ShieldCheck, Fingerprint, Activity } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { useNavigate } from 'react-router-dom';
+import axios from 'axios';
+
+// Axios global configuration
+axios.defaults.withCredentials = true;
 
 function Login() {
   const [email, setEmail] = useState('');
@@ -11,6 +15,7 @@ function Login() {
   const navigate = useNavigate();
 
   const handleGoogleLogin = () => {
+    // Google OAuth සඳහා කෙලින්ම redirect කිරීම
     window.location.href = 'http://localhost:8082/oauth2/authorization/google';
   };
 
@@ -18,34 +23,50 @@ function Login() {
     e.preventDefault();
     setLoading(true);
     
-    const loginData = new URLSearchParams();
-    loginData.append('username', email);
-    loginData.append('password', password);
+    // Spring Security formLogin බලාපොරොත්තු වන ආකාරයට දත්ත සැකසීම
+    const params = new URLSearchParams();
+    params.append('username', email);
+    params.append('password', password);
 
     try {
-      const response = await fetch('http://localhost:8082/api/auth/login', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-        body: loginData,
+      // 1. Login Request එක - withCredentials අනිවාර්යයි
+      const loginResponse = await axios.post('http://localhost:8082/api/auth/login', params, {
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' }
       });
 
-      if (response.ok) {
-        const userDetailsResponse = await fetch(
-          `http://localhost:8082/api/users/by-email?email=${encodeURIComponent(email)}`,
-          { method: 'GET', headers: { 'Accept': 'application/json' } }
+      if (loginResponse.status === 200) {
+        // 2. User Details ලබා ගැනීම - මෙවිට Cookie එක ස්වයංක්‍රීයව යවනු ලබයි
+        const userDetailsResponse = await axios.get(
+          `http://localhost:8082/api/users/by-email?email=${encodeURIComponent(email)}`
         );
 
-        if (userDetailsResponse.ok) {
-          const userData = await userDetailsResponse.json();
-          toast.success(`Welcome back, ${userData.name}!`);
-          if (userData.role === 'ADMIN') navigate('/admin/*');
-          else if (userData.role === 'TECHNICIAN') navigate('/tech/dashboard');
-          else navigate('/');
-        } else { navigate('/'); }
-      } else { toast.error('Access denied. Please check credentials.'); }
+        const userData = userDetailsResponse.data;
+
+        // LocalStorage එකේ දත්ත තැන්පත් කිරීම
+        localStorage.setItem('token', 'authenticated_session');
+        localStorage.setItem('user', JSON.stringify(userData));
+        
+        // Navbar එකට දැනුම් දීම
+        window.dispatchEvent(new Event("storage"));
+
+        toast.success(`Welcome back, ${userData.name}!`);
+
+        // Role එක අනුව Navigate කිරීම
+        if (userData.role === 'ADMIN') navigate('/admin/*');
+        else if (userData.role === 'TECHNICIAN') navigate('/tech/dashboard');
+        else navigate('/');
+
+      }
     } catch (error) {
-      toast.error('Server connection failed.');
-    } finally { setLoading(false); }
+      console.error("Login Error:", error);
+      if (error.response && error.response.status === 401) {
+        toast.error('Invalid email or password.');
+      } else {
+        toast.error('Server connection failed. Please try again.');
+      }
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -53,13 +74,9 @@ function Login() {
       
       {/* --- Left Section: Login Interface --- */}
       <section className="relative w-full md:w-[35%] lg:w-[30%] bg-white flex flex-col z-30 border-r border-slate-100">
-        
-        {/* Branding Line */}
         <div className="h-1.5 w-full bg-[#0c5252]"></div>
 
         <div className="flex-1 px-10 py-10 flex flex-col justify-between">
-          
-          {/* Logo */}
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 bg-[#0c5252] rounded-xl flex items-center justify-center shadow-lg shadow-[#0c5252]/20">
               <ShieldCheck className="text-white" size={22} />
@@ -70,7 +87,6 @@ function Login() {
             </div>
           </div>
 
-          {/* Login Form Container */}
           <div className="w-full max-w-sm mx-auto">
             <header className="mb-8">
               <div className="inline-flex items-center gap-2 px-2.5 py-1 rounded-full bg-[#f0f4f4] text-[#0c5252] text-[10px] font-bold uppercase tracking-widest mb-4">
@@ -83,7 +99,6 @@ function Login() {
             </header>
 
             <div className="space-y-5">
-              {/* Google SSO */}
               <button 
                 onClick={handleGoogleLogin}
                 className="w-full flex items-center justify-center gap-3 py-3 bg-white hover:bg-slate-50 border border-slate-200 rounded-xl font-bold text-slate-700 text-sm transition-all active:scale-[0.98]"
@@ -107,6 +122,7 @@ function Login() {
                       className="w-full pl-11 pr-4 py-3 bg-slate-50 border border-transparent focus:border-[#0c5252]/20 focus:bg-white focus:ring-4 focus:ring-[#0c5252]/5 rounded-xl text-slate-900 font-semibold transition-all outline-none text-sm"
                       type="email"
                       placeholder="email@campus.ac.lk"
+                      value={email}
                       onChange={(e) => setEmail(e.target.value)}
                       required
                     />
@@ -114,15 +130,14 @@ function Login() {
                 </div>
 
                 <div className="space-y-1.5">
-                  <div className="flex justify-between items-center ml-1">
-                    <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Password</label>
-                  </div>
+                  <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest ml-1">Password</label>
                   <div className="relative group">
                     <Lock className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-[#0c5252] transition-colors" size={16} />
                     <input
                       className="w-full pl-11 pr-11 py-3 bg-slate-50 border border-transparent focus:border-[#0c5252]/20 focus:bg-white focus:ring-4 focus:ring-[#0c5252]/5 rounded-xl text-slate-900 font-semibold transition-all outline-none text-sm"
                       type={showPassword ? "text" : "password"}
                       placeholder="••••••••"
+                      value={password}
                       onChange={(e) => setPassword(e.target.value)}
                       required
                     />
@@ -155,27 +170,21 @@ function Login() {
 
       {/* --- Right Section: Visual Showcase --- */}
       <section className="hidden md:flex flex-1 relative flex-col items-center justify-center p-12 bg-[#0c5252] overflow-hidden">
-        
-        {/* Decorative Background Circles */}
         <div className="absolute top-[-10%] right-[-10%] w-[600px] h-[600px] bg-[#2d6a6a] opacity-30 blur-[120px] rounded-full"></div>
         <div className="absolute bottom-[-10%] left-[-10%] w-[400px] h-[400px] bg-[#7c5c14] opacity-20 blur-[100px] rounded-full"></div>
         
         <div className="relative w-full max-w-4xl z-10">
-          
-          {/* Main Mockup Card */}
           <div className="relative rounded-[32px] overflow-hidden shadow-2xl border border-white/10 bg-[#f8fafa]">
-            {/* Top Browser Bar */}
             <div className="px-6 py-3 flex items-center justify-between bg-white border-b border-slate-100">
               <div className="flex gap-1.5">
                 <div className="w-2.5 h-2.5 rounded-full bg-[#ff5f57]"></div>
                 <div className="w-2.5 h-2.5 rounded-full bg-[#febc2e]"></div>
                 <div className="w-2.5 h-2.5 rounded-full bg-[#28c840]"></div>
               </div>
-              <div className="text-[10px] font-bold text-slate-300 uppercase tracking-widest tracking-[0.2em]">Smart Campus System</div>
+              <div className="text-[10px] font-bold text-slate-300 uppercase tracking-widest">Smart Campus System</div>
               <Activity size={14} className="text-[#0c5252]" />
             </div>
             
-            {/* Preview Image */}
             <div className="aspect-video relative group">
               <img 
                 src="https://i.pinimg.com/1200x/ad/2f/3a/ad2f3a9dbf640cf6cd22b9ca12f90d17.jpg" 
@@ -183,8 +192,6 @@ function Login() {
                 alt="System Interface" 
               />
               <div className="absolute inset-0 bg-[#0c5252]/20 mix-blend-multiply"></div>
-              
-              {/* Overlay Content */}
               <div className="absolute bottom-8 left-8 right-8">
                 <h2 className="text-white text-4xl font-black tracking-tight leading-none mb-2">Modernizing <br/>Education.</h2>
                 <p className="text-white/70 text-sm font-medium">Fully integrated facility and asset management system.</p>
@@ -192,7 +199,6 @@ function Login() {
             </div>
           </div>
 
-          {/* Stats / Info Row */}
           <div className="mt-12 flex justify-between items-center px-4">
             <div className="flex gap-8">
               <div>
@@ -204,13 +210,11 @@ function Login() {
                 <p className="text-white/40 text-[9px] font-bold uppercase tracking-widest">Monitoring</p>
               </div>
             </div>
-            
             <div className="flex items-center gap-2 bg-white/5 border border-white/10 px-4 py-2 rounded-xl backdrop-blur-sm">
               <div className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></div>
               <span className="text-white/80 text-[10px] font-bold uppercase tracking-widest leading-none">Status: Live</span>
             </div>
           </div>
-
         </div>
       </section>
     </main>

@@ -8,6 +8,7 @@ import Resources from './pages/client/Resources';
 import BookResource from './pages/client/BookResource';
 import MyBookings from './pages/client/MyBookings';
 import BookingsHub from './pages/client/BookingsHub';
+import SupportPage from './pages/client/SupportPage';
 
 
 
@@ -24,6 +25,7 @@ function App() {
         <Route path="/book/:id" element={<BookResource />} />
         <Route path="/my-bookings" element={<MyBookings />} />
         <Route path="/bookings" element={<BookingsHub />} />
+        <Route path="/support" element={<SupportPage />} />
         
       </Routes>
     </BrowserRouter>

@@ -2,7 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { 
   Calendar, Clock, AlignLeft, Users, 
-  ArrowLeft, CheckCircle2, Loader2, Sparkles 
+  ArrowLeft, CheckCircle2, Loader2, Sparkles,
+  PartyPopper, ArrowRight, ShieldCheck
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 
@@ -13,6 +14,7 @@ const BookResource = () => {
   const { id } = useParams(); 
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
+  const [isSuccess, setIsSuccess] = useState(false); // සාර්ථක වූ බව පෙන්වීමට
   const [resourceName, setResourceName] = useState("Resource");
 
   const [bookingData, setBookingData] = useState({
@@ -23,7 +25,6 @@ const BookResource = () => {
     expectedAttendees: ''
   });
 
-  // සම්පතේ විස්තර ලබා ගැනීම
   useEffect(() => {
     const fetchResourceDetails = async () => {
       try {
@@ -39,7 +40,6 @@ const BookResource = () => {
   const handleBooking = async (e) => {
     e.preventDefault();
 
-    // 1. කාල පරාසය වලංගු දැයි පරීක්ෂා කිරීම
     const start = new Date(bookingData.startTime);
     const end = new Date(bookingData.endTime);
 
@@ -50,8 +50,6 @@ const BookResource = () => {
 
     setLoading(true);
 
-    // 2. Backend එකට අවශ්‍ය දත්ත සකස් කිරීම
-    // 🛑 වැදගත්: userEmail යැවීම අවශ්‍ය නැත. Backend එකේ Principal මගින් එය ලබා ගනී.
     const payload = {
       resourceId: id,
       startTime: bookingData.startTime, 
@@ -61,23 +59,18 @@ const BookResource = () => {
     };
 
     try {
-      // AxiosInstance (api) හරහා request එක යැවීම
       await api.post('/bookings', payload);
       
-      toast.success("Booking Request Sent Successfully!", { icon: '🎉' });
+      // පණිවිඩය වෙනුවට Success UI එක පෙන්වීම
+      setIsSuccess(true);
+      toast.success("Request Logged Successfully!");
       
-      // තත්පර 1.5කට පසු My Bookings පේජ් එකට යොමු කිරීම
-      setTimeout(() => navigate('/my-bookings'), 1500);
-
     } catch (err) {
       console.error("Booking Error:", err);
-      
-      // 🛑 Backend එකෙන් එන Error පණිවිඩය නිවැරදිව හසුරුවා ගැනීම
       if (err.response?.status === 401) {
         toast.error("සැසිය අවසන් වී ඇත. කරුණාකර නැවත ලොග් වන්න.");
         navigate('/login');
       } else {
-        // Backend එකේ RuntimeException පණිවිඩය ලබා ගැනීම
         const errorMsg = typeof err.response?.data === 'string' 
           ? err.response.data 
           : "Booking failed. Check for time conflicts.";
@@ -89,11 +82,51 @@ const BookResource = () => {
   };
 
   return (
-    <div className="min-h-screen bg-[#f8fafa] font-sans selection:bg-[#0c5252] selection:text-white">
+    <div className="min-h-screen bg-[#f8fafa] font-sans selection:bg-[#0c5252] selection:text-white relative overflow-hidden">
       <Navbar />
       <div className="h-32"></div>
 
-      <div className="max-w-4xl mx-auto px-6 pb-20">
+      {/* --- SUCCESS OVERLAY UI --- */}
+      {isSuccess && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-6 bg-white animate-in fade-in duration-500">
+          <div className="absolute inset-0 bg-[#0c5252]/5 pointer-events-none"></div>
+          <div className="max-w-md w-full text-center space-y-8 animate-in zoom-in-95 duration-500">
+            <div className="relative inline-block">
+              <div className="w-24 h-24 bg-emerald-500 rounded-[32px] flex items-center justify-center mx-auto shadow-2xl shadow-emerald-500/40 relative z-10 animate-bounce">
+                <CheckCircle2 size={48} className="text-white" />
+              </div>
+              <div className="absolute -top-4 -right-4 w-12 h-12 bg-[#ebc070] rounded-2xl flex items-center justify-center animate-pulse delay-700">
+                <PartyPopper size={24} className="text-[#0c5252]" />
+              </div>
+            </div>
+
+            <div className="space-y-3">
+              <h2 className="text-4xl font-black text-[#0c5252] tracking-tighter uppercase italic">Mission Success!</h2>
+              <p className="text-slate-500 font-medium leading-relaxed">
+                Your reservation request for <span className="text-[#0c5252] font-black">{resourceName}</span> has been transmitted to the nexus.
+              </p>
+            </div>
+
+            <div className="bg-slate-50 rounded-3xl p-6 border border-slate-100 flex items-center gap-4 text-left">
+                <div className="p-3 bg-white rounded-xl shadow-sm"><ShieldCheck className="text-emerald-500" size={20}/></div>
+                <div>
+                    <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Next Phase</p>
+                    <p className="text-xs font-bold text-slate-700">Awaiting Departmental Authorization</p>
+                </div>
+            </div>
+
+            <button 
+              onClick={() => navigate('/my-bookings')}
+              className="w-full py-5 bg-[#0c5252] text-white font-black text-xs uppercase tracking-[0.2em] rounded-2xl hover:bg-[#154646] transition-all shadow-xl shadow-[#0c5252]/20 flex items-center justify-center gap-3 active:scale-95 group"
+            >
+              Go to My Bookings <ArrowRight size={18} className="group-hover:translate-x-1 transition-transform" />
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* --- ORIGINAL FORM UI --- */}
+      <div className={`max-w-4xl mx-auto px-6 pb-20 transition-all duration-500 ${isSuccess ? 'opacity-0 scale-95 blur-xl pointer-events-none' : 'opacity-100'}`}>
         <button 
           onClick={() => navigate(-1)} 
           className="flex items-center gap-2 text-[#0c5252]/60 hover:text-[#0c5252] font-bold text-xs uppercase tracking-widest mb-8 transition-colors group"

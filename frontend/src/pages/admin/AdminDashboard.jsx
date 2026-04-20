@@ -173,7 +173,7 @@ function AdminDashboard() {
         <main className="flex-1 overflow-y-auto p-12 custom-scrollbar">
           <Routes>
             <Route index element={<DashboardOverview />} />
-            <Route path="overview" element={<DashboardOverview />} />
+            <Route path="/*" element={<DashboardOverview />} />
             <Route path="users" element={<UserDirectory users={users} searchTerm={searchTerm} fetchUsers={fetchDashboardData}/>} />
             <Route path="bookings" element={<BookingManagement />} />
             <Route path="resources" element={<ResourcesDashboard />} />

@@ -1,6 +1,7 @@
 package com.smartcampus.backend.config;
 
 import com.smartcampus.backend.service.UserService;
+import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -8,12 +9,17 @@ import org.springframework.security.authentication.dao.DaoAuthenticationProvider
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
+import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.oauth2.core.user.OAuth2User;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.authentication.HttpStatusEntryPoint;
+import org.springframework.security.web.context.HttpSessionSecurityContextRepository;
+import org.springframework.security.web.context.SecurityContextRepository;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
+import org.springframework.http.HttpStatus;
 
 import java.util.Arrays;
 
@@ -33,6 +39,11 @@ public class WebSecurityConfig {
     }
 
     @Bean
+    public SecurityContextRepository securityContextRepository() {
+        return new HttpSessionSecurityContextRepository();
+    }
+
+    @Bean
     public DaoAuthenticationProvider authenticationProvider() {
         DaoAuthenticationProvider authProvider = new DaoAuthenticationProvider();
         authProvider.setUserDetailsService(userService);
@@ -49,52 +60,59 @@ public class WebSecurityConfig {
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
             .cors(cors -> cors.configurationSource(corsConfigurationSource()))
-            .csrf(csrf -> csrf.disable()) 
-            .authenticationProvider(authenticationProvider())
+            .csrf(csrf -> csrf.disable())
+            
+            .securityContext(context -> context
+                .securityContextRepository(securityContextRepository())
+            )
+            
+            .sessionManagement(session -> session
+                .sessionCreationPolicy(SessionCreationPolicy.IF_REQUIRED)
+            )
+
+            .exceptionHandling(exception -> exception
+                // 🛑 මේක තමයි ප්‍රධානම වෙනස: Login නැතිව Request එකක් ආවොත් /login වලට Redirect නොවී 401 Unauthorized Error එකක් දෙනවා.
+                .authenticationEntryPoint(new HttpStatusEntryPoint(HttpStatus.UNAUTHORIZED))
+            )
+
             .authorizeHttpRequests(auth -> auth
-                // 1. මේ ලිපින ඕනෑම කෙනෙකුට විවෘතයි
-                .requestMatchers("/", "/login**", "/error**", "/oauth2/**", "/api/auth/**", "/api/users/by-email", "/api/resources/**" , "/api/bookings/**").permitAll() 
-                
-                // 2. පරිශීලකයාට තමන්ගේ තොරතුරු බැලීමට
-                .requestMatchers("/api/users/me").authenticated()
-                
-                // 3. Admin ලට පමණක් විවෘත ලිපින
-                .requestMatchers("/api/admin/**").hasRole("ADMIN")
-                .requestMatchers("/api/users/**").hasRole("ADMIN") 
-                
-                .anyRequest().authenticated() 
+                .requestMatchers("/", "/login**", "/error**", "/oauth2/**", "/api/auth/**", "/api/resources/**").permitAll()
+                .requestMatchers("/api/bookings/**", "/api/users/me", "/api/users/by-email").authenticated()
+                .anyRequest().authenticated()
             )
             .formLogin(form -> form
-                .loginPage("/login")
                 .loginProcessingUrl("/api/auth/login")
                 .successHandler((request, response, authentication) -> {
-                    response.setStatus(200);
+                    securityContextRepository().saveContext(
+                        org.springframework.security.core.context.SecurityContextHolder.getContext(), request, response);
+                    
+                    response.setStatus(HttpServletResponse.SC_OK);
+                    response.setContentType("application/json;charset=UTF-8");
+                    response.getWriter().write("{\"message\": \"Login Successful\"}");
                 })
                 .failureHandler((request, response, exception) -> {
-                    response.setStatus(401);
+                    response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+                    response.setContentType("application/json;charset=UTF-8");
+                    response.getWriter().write("{\"error\": \"Login Failed\"}");
                 })
             )
             .oauth2Login(oauth2 -> oauth2
                 .successHandler((request, response, authentication) -> {
                     OAuth2User oAuth2User = (OAuth2User) authentication.getPrincipal();
-                    String email = oAuth2User.getAttribute("email");
-                    String name = oAuth2User.getAttribute("name");
-                    String picture = oAuth2User.getAttribute("picture");
-                    String providerId = oAuth2User.getAttribute("sub");
-
-                    userService.processOAuthPostLogin(email, name, picture, providerId);
-                    response.sendRedirect("http://localhost:5173/");
+                    userService.processOAuthPostLogin(
+                        oAuth2User.getAttribute("email"), 
+                        oAuth2User.getAttribute("name"), 
+                        oAuth2User.getAttribute("picture"), 
+                        oAuth2User.getAttribute("sub")
+                    );
+                    response.sendRedirect("http://localhost:5173/dashboard");
                 })
             )
             .logout(logout -> logout
                 .logoutUrl("/api/logout")
-                .logoutSuccessHandler((request, response, authentication) -> {
-                    response.setStatus(200);
-                })
                 .invalidateHttpSession(true)
-                .clearAuthentication(true)
                 .deleteCookies("JSESSIONID")
-                .deleteCookies("remember-me")
+                .logoutSuccessHandler((request, response, authentication) -> response.setStatus(200))
             );
 
         return http.build();
@@ -103,11 +121,12 @@ public class WebSecurityConfig {
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
-        configuration.setAllowedOrigins(Arrays.asList("http://localhost:5173", "http://localhost:5174"));
+        configuration.setAllowedOrigins(Arrays.asList("http://localhost:5173"));
         configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS"));
-        configuration.setAllowedHeaders(Arrays.asList("Authorization", "Cache-Control", "Content-Type", "Accept"));
-        configuration.setAllowCredentials(true); 
-        
+        configuration.setAllowedHeaders(Arrays.asList("Authorization", "Content-Type", "Accept", "X-Requested-With", "Cookie"));
+        configuration.setAllowCredentials(true);
+        configuration.setExposedHeaders(Arrays.asList("Set-Cookie"));
+
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**", configuration);
         return source;

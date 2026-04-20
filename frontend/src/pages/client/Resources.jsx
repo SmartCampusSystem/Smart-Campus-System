@@ -51,7 +51,7 @@ const Resources = () => {
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10">
             {resources.map((resource) => (
               <div 
-                key={resource.id} 
+                key={resource.id || resource._id} 
                 className="group relative bg-white rounded-[40px] p-8 border border-slate-100 shadow-[0_20px_50px_rgba(0,0,0,0.02)] hover:shadow-[0_40px_80px_rgba(12,82,82,0.1)] transition-all duration-500 hover:-translate-y-2 overflow-hidden"
               >
                 {/* Decorative Element */}
@@ -85,7 +85,7 @@ const Resources = () => {
                   </div>
 
                   <Link 
-                    to={`/book/${resource.id}`}
+                    to={`/book/${resource.id || resource._id}`}
                     className="flex items-center justify-between w-full p-2 pl-6 bg-slate-50 rounded-2xl group-hover:bg-[#ebc070] transition-all duration-500"
                   >
                     <span className="text-[10px] font-black uppercase tracking-[0.2em] text-[#0c5252]">Reserve Now</span>

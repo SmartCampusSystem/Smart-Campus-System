@@ -7,6 +7,7 @@ import Register from './pages/auth/Register';
 import Resources from './pages/client/Resources';
 import BookResource from './pages/client/BookResource';
 import MyBookings from './pages/client/MyBookings';
+import BookingsHub from './pages/client/BookingsHub';
 
 
 
@@ -22,6 +23,7 @@ function App() {
         <Route path="/resources" element={<Resources />} />
         <Route path="/book/:id" element={<BookResource />} />
         <Route path="/my-bookings" element={<MyBookings />} />
+        <Route path="/bookings" element={<BookingsHub />} />
         
       </Routes>
     </BrowserRouter>

@@ -105,7 +105,7 @@ public class WebSecurityConfig {
                         oAuth2User.getAttribute("picture"), 
                         oAuth2User.getAttribute("sub")
                     );
-                    response.sendRedirect("http://localhost:5173/dashboard");
+                    response.sendRedirect("http://localhost:5173/");
                 })
             )
             .logout(logout -> logout

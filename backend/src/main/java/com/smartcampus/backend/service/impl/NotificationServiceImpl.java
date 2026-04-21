@@ -42,4 +42,17 @@ public class NotificationServiceImpl implements NotificationService {
     public void deleteNotification(String id) {
         notificationRepository.deleteById(id);
     }
+
+    @Override
+public void markAllAsRead(String email) {
+    List<Notification> notifications = notificationRepository.findByRecipientEmailAndIsReadFalse(email);
+    notifications.forEach(n -> n.setRead(true));
+    notificationRepository.saveAll(notifications);
+}
+
+@Override
+public void clearAllNotifications(String email) {
+    List<Notification> notifications = notificationRepository.findByRecipientEmail(email);
+    notificationRepository.deleteAll(notifications);
+}
 }

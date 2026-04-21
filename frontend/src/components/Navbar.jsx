@@ -3,16 +3,25 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { 
   ShieldCheck, Sparkles, Bell, ShoppingBag, 
-  LogOut, User, Settings, ChevronDown, GraduationCap 
+  LogOut, User, Settings, ChevronDown, GraduationCap,
+  Clock, CheckCircle, Trash2, MailOpen
 } from 'lucide-react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
+import axios from 'axios';
 
 const Navbar = () => {
   const [showProfileMenu, setShowProfileMenu] = useState(false);
+  const [showNotifications, setShowNotifications] = useState(false);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [userName, setUserName] = useState("Smart User");
+  const [userEmail, setUserEmail] = useState("");
   
+  // Notification States
+  const [notifications, setNotifications] = useState([]);
+  const [unreadCount, setUnreadCount] = useState(0);
+
   const menuRef = useRef(null);
+  const notificationRef = useRef(null);
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -25,9 +34,32 @@ const Navbar = () => {
       try {
         const userData = JSON.parse(userJson);
         setUserName(userData.name || "Smart User");
+        setUserEmail(userData.email || "");
       } catch (e) {
         setUserName("Smart User");
       }
+    }
+  };
+
+  // Backend එකෙන් Notifications ලබා ගැනීම
+  const fetchNotifications = async () => {
+    if (!userEmail) return;
+    try {
+      const res = await axios.get(`http://localhost:8082/api/notifications/user/${userEmail}`);
+      const countRes = await axios.get(`http://localhost:8082/api/notifications/user/${userEmail}/unread-count`);
+      setNotifications(res.data);
+      setUnreadCount(countRes.data);
+    } catch (error) {
+      console.error("Error fetching notifications", error);
+    }
+  };
+
+  const markAsRead = async (id) => {
+    try {
+      await axios.put(`http://localhost:8082/api/notifications/${id}/read`);
+      fetchNotifications(); // Refresh list
+    } catch (error) {
+      console.error("Error marking as read", error);
     }
   };
 
@@ -40,6 +72,9 @@ const Navbar = () => {
       if (menuRef.current && !menuRef.current.contains(event.target)) {
         setShowProfileMenu(false);
       }
+      if (notificationRef.current && !notificationRef.current.contains(event.target)) {
+        setShowNotifications(false);
+      }
     };
     document.addEventListener('mousedown', handleClickOutside);
 
@@ -48,7 +83,16 @@ const Navbar = () => {
       window.removeEventListener('authChange', checkLoginStatus);
       document.removeEventListener('mousedown', handleClickOutside);
     };
-  }, [location]);
+  }, [location, userEmail]);
+
+  // Notifications update කිරීමට polling එකක් (සෑම තත්පර 30 කට වරක්)
+  useEffect(() => {
+    if (isLoggedIn && userEmail) {
+      fetchNotifications();
+      const interval = setInterval(fetchNotifications, 30000);
+      return () => clearInterval(interval);
+    }
+  }, [isLoggedIn, userEmail]);
 
   const handleLogout = () => {
     localStorage.removeItem('token');
@@ -63,9 +107,7 @@ const Navbar = () => {
 
   return (
     <nav className="fixed top-0 left-0 w-full z-[100]">
-      {/* Container removed padding to stay edge-to-edge */}
       <div className="w-full">
-        {/* Navbar main body - Removed scroll-dependent classes */}
         <div className="flex items-center justify-between w-full h-20 px-10 bg-[#0c5252] border-b border-white/10 shadow-lg">
           
           {/* Smart Campus Logo Section */}
@@ -125,10 +167,86 @@ const Navbar = () => {
               </div>
             ) : (
               <div className="flex items-center gap-3">
-                <button className="w-12 h-12 flex items-center justify-center rounded-2xl bg-white/5 text-white/70 hover:text-[#ebc070] border border-white/10 transition-all relative group">
-                    <Bell size={20} />
-                    <span className="absolute top-3.5 right-3.5 w-2.5 h-2.5 bg-[#ebc070] rounded-full border-2 border-[#0c5252] animate-pulse"></span>
-                </button>
+                
+                {/* --- NOTIFICATION BELL SECTION --- */}
+                <div className="relative" ref={notificationRef}>
+                  <button 
+                    onClick={() => setShowNotifications(!showNotifications)}
+                    className={`w-12 h-12 flex items-center justify-center rounded-2xl bg-white/5 border border-white/10 transition-all relative group ${showNotifications ? 'text-[#ebc070] bg-white/10' : 'text-white/70 hover:text-[#ebc070]'}`}
+                  >
+                    <Bell size={20} className={unreadCount > 0 ? 'animate-[bell-ring_1s_infinite]' : ''} />
+                    {unreadCount > 0 && (
+                      <span className="absolute -top-1 -right-1 min-w-[20px] h-5 px-1 bg-[#ebc070] text-[#0c5252] text-[10px] font-black rounded-full border-2 border-[#0c5252] flex items-center justify-center shadow-lg">
+                        {unreadCount}
+                      </span>
+                    )}
+                  </button>
+
+                  {/* NOTIFICATION POPUP */}
+                  {showNotifications && (
+                    <div className="absolute right-0 mt-4 w-[380px] bg-[#0c5252] border border-white/10 rounded-[25px] shadow-2xl overflow-hidden backdrop-blur-3xl z-[110] animate-in fade-in slide-in-from-top-2 duration-300">
+                      <div className="px-6 py-5 bg-white/5 border-b border-white/10 flex items-center justify-between">
+                        <div className="flex items-center gap-3">
+                           <div className="w-8 h-8 bg-[#ebc070]/10 rounded-lg flex items-center justify-center">
+                              <Bell size={16} className="text-[#ebc070]" />
+                           </div>
+                           <h3 className="text-white font-black text-sm uppercase tracking-widest">Notifications</h3>
+                        </div>
+                        {unreadCount > 0 && (
+                          <span className="text-[9px] bg-[#ebc070] text-[#0c5252] px-2 py-0.5 rounded-full font-black uppercase">{unreadCount} New</span>
+                        )}
+                      </div>
+
+                      <div className="max-h-[420px] overflow-y-auto custom-scrollbar">
+                        {notifications.length > 0 ? (
+                          notifications.map((notif) => (
+                            <div 
+                              key={notif.id}
+                              onClick={() => !notif.read && markAsRead(notif.id)}
+                              className={`p-5 border-b border-white/5 flex gap-4 transition-all hover:bg-white/5 cursor-pointer relative group/notif ${!notif.read ? 'bg-[#ebc070]/5' : ''}`}
+                            >
+                              <div className={`w-10 h-10 shrink-0 rounded-xl flex items-center justify-center ${notif.type === 'BOOKING' ? 'bg-blue-500/10 text-blue-400' : 'bg-[#ebc070]/10 text-[#ebc070]'}`}>
+                                {notif.type === 'BOOKING' ? <CheckCircle size={18} /> : <GraduationCap size={18} />}
+                              </div>
+                              <div className="flex flex-col gap-1 pr-4">
+                                <p className={`text-[12px] leading-snug ${!notif.read ? 'text-white font-bold' : 'text-white/60'}`}>
+                                  {notif.message}
+                                </p>
+                                <div className="flex items-center gap-3 mt-1">
+                                  <span className="flex items-center gap-1 text-[10px] text-white/30 uppercase font-black tracking-tighter">
+                                    <Clock size={10} /> {new Date(notif.createdAt).toLocaleDateString()}
+                                  </span>
+                                  {!notif.read && (
+                                    <span className="w-1.5 h-1.5 bg-[#ebc070] rounded-full"></span>
+                                  )}
+                                </div>
+                              </div>
+                              {!notif.read && (
+                                <div className="absolute right-4 top-1/2 -translate-y-1/2 opacity-0 group-hover/notif:opacity-100 transition-opacity">
+                                  <MailOpen size={14} className="text-[#ebc070]" />
+                                </div>
+                              )}
+                            </div>
+                          ))
+                        ) : (
+                          <div className="py-20 flex flex-col items-center justify-center text-white/20 gap-4">
+                             <Bell size={48} strokeWidth={1} />
+                             <p className="text-[10px] font-black uppercase tracking-[0.2em]">No Notifications Yet</p>
+                          </div>
+                        )}
+                      </div>
+
+                      <Link 
+                        to="/notifications" 
+                        onClick={() => setShowNotifications(false)}
+                        className="block w-full py-4 text-center bg-white/5 text-[10px] text-[#ebc070] font-black uppercase tracking-[0.3em] hover:bg-[#ebc070] hover:text-[#0c5252] transition-all"
+                      >
+                        View All Activities
+                      </Link>
+                    </div>
+                  )}
+                </div>
+                {/* --- END NOTIFICATION SECTION --- */}
 
                 <Link to="/my-bookings" className="w-12 h-12 flex items-center justify-center rounded-2xl bg-white/5 text-white/70 hover:text-[#ebc070] border border-white/10 transition-all group">
                   <ShoppingBag size={20} />
@@ -155,7 +273,7 @@ const Navbar = () => {
                     <div className="absolute right-0 mt-4 w-72 bg-[#0c5252] border border-white/10 rounded-[25px] shadow-2xl p-3 backdrop-blur-3xl z-[110]">
                       <div className="px-6 py-4 mb-2 bg-white/5 rounded-[20px] border border-white/5 flex items-center gap-4">
                         <div className="w-10 h-10 bg-[#ebc070] rounded-xl flex items-center justify-center text-[#0c5252] font-black text-lg">
-                             {userName.charAt(0).toUpperCase()}
+                              {userName.charAt(0).toUpperCase()}
                         </div>
                         <div className="overflow-hidden">
                             <p className="text-[9px] text-[#ebc070] font-black uppercase tracking-[0.2em] mb-0.5">Active</p>
@@ -188,6 +306,19 @@ const Navbar = () => {
           </div>
         </div>
       </div>
+      
+      <style dangerouslySetInnerHTML={{ __html: `
+        @keyframes bell-ring {
+          0%, 100% { transform: rotate(0); }
+          20% { transform: rotate(15deg); }
+          40% { transform: rotate(-15deg); }
+          60% { transform: rotate(10deg); }
+          80% { transform: rotate(-10deg); }
+        }
+        .custom-scrollbar::-webkit-scrollbar { width: 4px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: rgba(255,255,255,0.05); }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #ebc070; border-radius: 10px; }
+      `}} />
     </nav>
   );
 };

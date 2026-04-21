@@ -71,13 +71,13 @@ public class WebSecurityConfig {
             )
 
             .exceptionHandling(exception -> exception
-                // 🛑 මේක තමයි ප්‍රධානම වෙනස: Login නැතිව Request එකක් ආවොත් /login වලට Redirect නොවී 401 Unauthorized Error එකක් දෙනවා.
                 .authenticationEntryPoint(new HttpStatusEntryPoint(HttpStatus.UNAUTHORIZED))
             )
 
             .authorizeHttpRequests(auth -> auth
                 .requestMatchers("/", "/login**", "/error**", "/oauth2/**", "/api/auth/**", "/api/resources/**").permitAll()
-                .requestMatchers("/api/bookings/**", "/api/users/me", "/api/users/by-email").authenticated()
+                // Notification Endpoints වලට ලොග් වූ පරිශීලකයන්ට අවසර ලබා දීම
+                .requestMatchers("/api/notifications/**", "/api/bookings/**", "/api/users/me", "/api/users/by-email").authenticated()
                 .anyRequest().authenticated()
             )
             .formLogin(form -> form

@@ -53,4 +53,16 @@ public class NotificationController {
         notificationService.deleteNotification(id);
         return new ResponseEntity<>(HttpStatus.NO_CONTENT);
     }
+
+    @PutMapping("/user/{email}/read-all")
+public ResponseEntity<Void> markAllRead(@PathVariable String email) {
+    notificationService.markAllAsRead(email);
+    return ResponseEntity.ok().build();
+}
+
+@DeleteMapping("/user/{email}/clear")
+public ResponseEntity<Void> clearAll(@PathVariable String email) {
+    notificationService.clearAllNotifications(email);
+    return ResponseEntity.ok().build();
+}
 }

@@ -6,9 +6,12 @@ import java.util.List;
 
 public interface NotificationRepository extends MongoRepository<Notification, String> {
     
-    // Email එක අනුව අලුත්ම පණිවිඩ මුලින්ම ලබා ගැනීම
-    List<Notification> findByRecipientEmailOrderByCreatedAtDesc(String recipientEmail);
+    List<Notification> findByRecipientEmailOrderByCreatedAtDesc(String email);
     
-    // කියවා නැති පණිවිඩ ගණන බැලීමට
-    long countByRecipientEmailAndIsReadFalse(String recipientEmail);
+    long countByRecipientEmailAndIsReadFalse(String email);
+
+    // --- පහත පේළි දෙක අලුතින් එකතු කරන්න ---
+    List<Notification> findByRecipientEmailAndIsReadFalse(String email);
+    
+    List<Notification> findByRecipientEmail(String email);
 }

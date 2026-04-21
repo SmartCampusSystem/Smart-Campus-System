@@ -19,4 +19,6 @@ public interface NotificationService {
     
     // පණිවිඩයක් ඉවත් කිරීම
     void deleteNotification(String id);
+    void markAllAsRead(String email);
+    void clearAllNotifications(String email);
 }

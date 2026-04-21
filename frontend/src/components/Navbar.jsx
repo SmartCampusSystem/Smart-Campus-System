@@ -63,6 +63,28 @@ const Navbar = () => {
     }
   };
 
+  // --- අලුතින් එක් කළ Functionalities ---
+  const markAllAsRead = async () => {
+    try {
+      await axios.put(`http://localhost:8082/api/notifications/user/${userEmail}/read-all`);
+      fetchNotifications();
+    } catch (error) {
+      console.error("Error marking all as read", error);
+    }
+  };
+
+  const clearAllNotifications = async () => {
+    if (window.confirm("Are you sure you want to clear all notifications?")) {
+      try {
+        await axios.delete(`http://localhost:8082/api/notifications/user/${userEmail}/clear`);
+        fetchNotifications();
+      } catch (error) {
+        console.error("Error clearing notifications", error);
+      }
+    }
+  };
+  // ------------------------------------
+
   useEffect(() => {
     checkLoginStatus();
     window.addEventListener('storage', checkLoginStatus);
@@ -85,7 +107,6 @@ const Navbar = () => {
     };
   }, [location, userEmail]);
 
-  // Notifications update කිරීමට polling එකක් (සෑම තත්පර 30 කට වරක්)
   useEffect(() => {
     if (isLoggedIn && userEmail) {
       fetchNotifications();
@@ -192,9 +213,22 @@ const Navbar = () => {
                            </div>
                            <h3 className="text-white font-black text-sm uppercase tracking-widest">Notifications</h3>
                         </div>
-                        {unreadCount > 0 && (
-                          <span className="text-[9px] bg-[#ebc070] text-[#0c5252] px-2 py-0.5 rounded-full font-black uppercase">{unreadCount} New</span>
-                        )}
+                        <div className="flex items-center gap-2">
+                           <button 
+                             onClick={markAllAsRead}
+                             className="p-2 hover:bg-white/10 rounded-lg text-[#ebc070] transition-colors group/btn relative"
+                             title="Mark all as read"
+                           >
+                             <MailOpen size={14} />
+                           </button>
+                           <button 
+                             onClick={clearAllNotifications}
+                             className="p-2 hover:bg-rose-500/20 rounded-lg text-rose-400 transition-colors group/btn relative"
+                             title="Clear all"
+                           >
+                             <Trash2 size={14} />
+                           </button>
+                        </div>
                       </div>
 
                       <div className="max-h-[420px] overflow-y-auto custom-scrollbar">

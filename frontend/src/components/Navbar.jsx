@@ -4,7 +4,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { 
   ShieldCheck, Sparkles, Bell, ShoppingBag, 
   LogOut, User, Settings, ChevronDown, GraduationCap,
-  Clock, CheckCircle, Trash2, MailOpen
+  Clock, CheckCircle, Trash2, MailOpen, Inbox
 } from 'lucide-react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import axios from 'axios';
@@ -41,7 +41,6 @@ const Navbar = () => {
     }
   };
 
-  // Backend එකෙන් Notifications ලබා ගැනීම
   const fetchNotifications = async () => {
     if (!userEmail) return;
     try {
@@ -57,13 +56,12 @@ const Navbar = () => {
   const markAsRead = async (id) => {
     try {
       await axios.put(`http://localhost:8082/api/notifications/${id}/read`);
-      fetchNotifications(); // Refresh list
+      fetchNotifications();
     } catch (error) {
       console.error("Error marking as read", error);
     }
   };
 
-  // --- අලුතින් එක් කළ Functionalities ---
   const markAllAsRead = async () => {
     try {
       await axios.put(`http://localhost:8082/api/notifications/user/${userEmail}/read-all`);
@@ -83,7 +81,6 @@ const Navbar = () => {
       }
     }
   };
-  // ------------------------------------
 
   useEffect(() => {
     checkLoginStatus();
@@ -131,7 +128,6 @@ const Navbar = () => {
       <div className="w-full">
         <div className="flex items-center justify-between w-full h-20 px-10 bg-[#0c5252] border-b border-white/10 shadow-lg">
           
-          {/* Smart Campus Logo Section */}
           <Link to="/" className="flex items-center gap-4 group">
             <div className="relative">
               <div className="w-12 h-12 bg-gradient-to-br from-[#ebc070] to-[#d4a855] rounded-2xl flex items-center justify-center group-hover:scale-110 group-hover:rotate-[15deg] transition-all duration-500">
@@ -149,7 +145,6 @@ const Navbar = () => {
             </div>
           </Link>
 
-          {/* Luxury Navigation Links */}
           <div className="hidden xl:flex items-center gap-1 bg-black/20 p-1.5 rounded-[20px] border border-white/5 backdrop-blur-md">
             {['Home', 'Resources', 'Bookings', 'Tickets', 'Support'].map((item) => {
               const path = item.toLowerCase() === 'home' ? '/' : `/${item.toLowerCase()}`;
@@ -174,7 +169,6 @@ const Navbar = () => {
             })}
           </div>
 
-          {/* Action Area */}
           <div className="flex items-center gap-5">
             {!isLoggedIn ? (
               <div className="flex items-center gap-4">
@@ -189,98 +183,125 @@ const Navbar = () => {
             ) : (
               <div className="flex items-center gap-3">
                 
-                {/* --- NOTIFICATION BELL SECTION --- */}
+                {/* --- MODERN NOTIFICATION SECTION --- */}
                 <div className="relative" ref={notificationRef}>
                   <button 
                     onClick={() => setShowNotifications(!showNotifications)}
-                    className={`w-12 h-12 flex items-center justify-center rounded-2xl bg-white/5 border border-white/10 transition-all relative group ${showNotifications ? 'text-[#ebc070] bg-white/10' : 'text-white/70 hover:text-[#ebc070]'}`}
+                    className={`w-12 h-12 flex items-center justify-center rounded-2xl transition-all relative group ${
+                      showNotifications 
+                        ? 'bg-[#ebc070] text-[#0c5252] shadow-[0_0_20px_rgba(235,192,112,0.3)]' 
+                        : 'bg-white/5 border border-white/10 text-white/70 hover:border-[#ebc070]/50 hover:text-[#ebc070]'
+                    }`}
                   >
                     <Bell size={20} className={unreadCount > 0 ? 'animate-[bell-ring_1s_infinite]' : ''} />
                     {unreadCount > 0 && (
-                      <span className="absolute -top-1 -right-1 min-w-[20px] h-5 px-1 bg-[#ebc070] text-[#0c5252] text-[10px] font-black rounded-full border-2 border-[#0c5252] flex items-center justify-center shadow-lg">
-                        {unreadCount}
+                      <span className="absolute -top-1.5 -right-1.5 w-5 h-5 bg-rose-500 text-white text-[10px] font-black rounded-full border-2 border-[#0c5252] flex items-center justify-center shadow-lg animate-bounce">
+                        {unreadCount > 9 ? '9+' : unreadCount}
                       </span>
                     )}
                   </button>
 
-                  {/* NOTIFICATION POPUP */}
                   {showNotifications && (
-                    <div className="absolute right-0 mt-4 w-[380px] bg-[#0c5252] border border-white/10 rounded-[25px] shadow-2xl overflow-hidden backdrop-blur-3xl z-[110] animate-in fade-in slide-in-from-top-2 duration-300">
-                      <div className="px-6 py-5 bg-white/5 border-b border-white/10 flex items-center justify-between">
-                        <div className="flex items-center gap-3">
-                           <div className="w-8 h-8 bg-[#ebc070]/10 rounded-lg flex items-center justify-center">
-                              <Bell size={16} className="text-[#ebc070]" />
-                           </div>
-                           <h3 className="text-white font-black text-sm uppercase tracking-widest">Notifications</h3>
+                    <div className="absolute right-0 mt-5 w-[420px] bg-[#0a4242]/95 backdrop-blur-2xl border border-white/10 rounded-[32px] shadow-[0_20px_50px_rgba(0,0,0,0.5)] overflow-hidden z-[110] animate-in fade-in zoom-in-95 duration-300">
+                      {/* Header */}
+                      <div className="p-6 bg-gradient-to-b from-white/10 to-transparent flex items-center justify-between">
+                        <div>
+                          <h3 className="text-white font-black text-lg tracking-tight">Activities</h3>
+                          <p className="text-[#ebc070] text-[10px] font-black uppercase tracking-[0.2em]">You have {unreadCount} unread tasks</p>
                         </div>
-                        <div className="flex items-center gap-2">
-                           <button 
-                             onClick={markAllAsRead}
-                             className="p-2 hover:bg-white/10 rounded-lg text-[#ebc070] transition-colors group/btn relative"
-                             title="Mark all as read"
-                           >
-                             <MailOpen size={14} />
-                           </button>
-                           <button 
-                             onClick={clearAllNotifications}
-                             className="p-2 hover:bg-rose-500/20 rounded-lg text-rose-400 transition-colors group/btn relative"
-                             title="Clear all"
-                           >
-                             <Trash2 size={14} />
-                           </button>
+                        <div className="flex gap-2">
+                          <button 
+                            onClick={markAllAsRead}
+                            className="w-10 h-10 flex items-center justify-center rounded-xl bg-white/5 text-[#ebc070] hover:bg-[#ebc070] hover:text-[#0c5252] transition-all duration-300 group/btn"
+                            title="Mark all as read"
+                          >
+                            <MailOpen size={18} />
+                          </button>
+                          <button 
+                            onClick={clearAllNotifications}
+                            className="w-10 h-10 flex items-center justify-center rounded-xl bg-white/5 text-rose-400 hover:bg-rose-500 hover:text-white transition-all duration-300"
+                            title="Clear all history"
+                          >
+                            <Trash2 size={18} />
+                          </button>
                         </div>
                       </div>
 
-                      <div className="max-h-[420px] overflow-y-auto custom-scrollbar">
+                      {/* Content */}
+                      <div className="max-h-[450px] overflow-y-auto custom-scrollbar px-3 pb-3">
                         {notifications.length > 0 ? (
-                          notifications.map((notif) => (
-                            <div 
-                              key={notif.id}
-                              onClick={() => !notif.read && markAsRead(notif.id)}
-                              className={`p-5 border-b border-white/5 flex gap-4 transition-all hover:bg-white/5 cursor-pointer relative group/notif ${!notif.read ? 'bg-[#ebc070]/5' : ''}`}
-                            >
-                              <div className={`w-10 h-10 shrink-0 rounded-xl flex items-center justify-center ${notif.type === 'BOOKING' ? 'bg-blue-500/10 text-blue-400' : 'bg-[#ebc070]/10 text-[#ebc070]'}`}>
-                                {notif.type === 'BOOKING' ? <CheckCircle size={18} /> : <GraduationCap size={18} />}
-                              </div>
-                              <div className="flex flex-col gap-1 pr-4">
-                                <p className={`text-[12px] leading-snug ${!notif.read ? 'text-white font-bold' : 'text-white/60'}`}>
-                                  {notif.message}
-                                </p>
-                                <div className="flex items-center gap-3 mt-1">
-                                  <span className="flex items-center gap-1 text-[10px] text-white/30 uppercase font-black tracking-tighter">
-                                    <Clock size={10} /> {new Date(notif.createdAt).toLocaleDateString()}
-                                  </span>
+                          <div className="grid gap-2">
+                            {notifications.map((notif) => (
+                              <div 
+                                key={notif.id}
+                                onClick={() => !notif.read && markAsRead(notif.id)}
+                                className={`group/item relative p-4 rounded-2xl transition-all duration-300 cursor-pointer border ${
+                                  !notif.read 
+                                    ? 'bg-white/10 border-white/10 hover:bg-white/15' 
+                                    : 'bg-transparent border-transparent hover:bg-white/5'
+                                }`}
+                              >
+                                <div className="flex gap-4">
+                                  <div className={`w-12 h-12 shrink-0 rounded-2xl flex items-center justify-center shadow-inner ${
+                                    notif.type === 'BOOKING' 
+                                      ? 'bg-blue-500/20 text-blue-400' 
+                                      : 'bg-[#ebc070]/20 text-[#ebc070]'
+                                  }`}>
+                                    {notif.type === 'BOOKING' ? <CheckCircle size={22} /> : <GraduationCap size={22} />}
+                                  </div>
+                                  
+                                  <div className="flex flex-col justify-center flex-1 min-w-0">
+                                    <p className={`text-[13px] leading-relaxed mb-1.5 ${!notif.read ? 'text-white font-bold' : 'text-white/50'}`}>
+                                      {notif.message}
+                                    </p>
+                                    <div className="flex items-center gap-3">
+                                      <span className="flex items-center gap-1.5 text-[10px] text-white/30 font-bold uppercase tracking-widest">
+                                        <Clock size={12} /> {new Date(notif.createdAt).toLocaleDateString()}
+                                      </span>
+                                      {!notif.read && (
+                                        <span className="flex items-center gap-1">
+                                          <span className="w-1.5 h-1.5 bg-[#ebc070] rounded-full animate-pulse"></span>
+                                          <span className="text-[9px] text-[#ebc070] font-black uppercase tracking-tighter">New</span>
+                                        </span>
+                                      )}
+                                    </div>
+                                  </div>
+
                                   {!notif.read && (
-                                    <span className="w-1.5 h-1.5 bg-[#ebc070] rounded-full"></span>
+                                    <div className="absolute right-4 top-4 opacity-0 group-hover/item:opacity-100 transition-opacity">
+                                      <div className="w-8 h-8 rounded-full bg-[#ebc070] flex items-center justify-center text-[#0c5252]">
+                                        <MailOpen size={14} />
+                                      </div>
+                                    </div>
                                   )}
                                 </div>
                               </div>
-                              {!notif.read && (
-                                <div className="absolute right-4 top-1/2 -translate-y-1/2 opacity-0 group-hover/notif:opacity-100 transition-opacity">
-                                  <MailOpen size={14} className="text-[#ebc070]" />
-                                </div>
-                              )}
-                            </div>
-                          ))
+                            ))}
+                          </div>
                         ) : (
-                          <div className="py-20 flex flex-col items-center justify-center text-white/20 gap-4">
-                             <Bell size={48} strokeWidth={1} />
-                             <p className="text-[10px] font-black uppercase tracking-[0.2em]">No Notifications Yet</p>
+                          <div className="py-16 flex flex-col items-center justify-center text-center px-10">
+                            <div className="w-20 h-20 bg-white/5 rounded-[30px] flex items-center justify-center mb-5 text-white/10">
+                              <Inbox size={40} strokeWidth={1} />
+                            </div>
+                            <h4 className="text-white font-bold text-sm mb-1">No Notifications</h4>
+                            <p className="text-white/30 text-[11px] uppercase tracking-[0.2em] font-black">Your inbox is empty for now</p>
                           </div>
                         )}
                       </div>
 
+                      {/* Footer */}
                       <Link 
                         to="/notifications" 
                         onClick={() => setShowNotifications(false)}
-                        className="block w-full py-4 text-center bg-white/5 text-[10px] text-[#ebc070] font-black uppercase tracking-[0.3em] hover:bg-[#ebc070] hover:text-[#0c5252] transition-all"
+                        className="group/footer flex items-center justify-center gap-3 w-full py-5 bg-white/5 hover:bg-[#ebc070] transition-all duration-500"
                       >
-                        View All Activities
+                        <span className="text-[11px] text-[#ebc070] group-hover/footer:text-[#0c5252] font-black uppercase tracking-[0.3em]">View Full Dashboard</span>
+                        <ChevronDown size={14} className="-rotate-90 text-[#ebc070] group-hover/footer:text-[#0c5252] transition-transform group-hover/footer:translate-x-1" />
                       </Link>
                     </div>
                   )}
                 </div>
-                {/* --- END NOTIFICATION SECTION --- */}
+                {/* --- END MODERN NOTIFICATION SECTION --- */}
 
                 <Link to="/my-bookings" className="w-12 h-12 flex items-center justify-center rounded-2xl bg-white/5 text-white/70 hover:text-[#ebc070] border border-white/10 transition-all group">
                   <ShoppingBag size={20} />
@@ -349,9 +370,10 @@ const Navbar = () => {
           60% { transform: rotate(10deg); }
           80% { transform: rotate(-10deg); }
         }
-        .custom-scrollbar::-webkit-scrollbar { width: 4px; }
-        .custom-scrollbar::-webkit-scrollbar-track { background: rgba(255,255,255,0.05); }
-        .custom-scrollbar::-webkit-scrollbar-thumb { background: #ebc070; border-radius: 10px; }
+        .custom-scrollbar::-webkit-scrollbar { width: 5px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: rgba(235,192,112,0.2); border-radius: 10px; }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: rgba(235,192,112,0.5); }
       `}} />
     </nav>
   );

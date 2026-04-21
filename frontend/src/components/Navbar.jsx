@@ -4,7 +4,8 @@ import React, { useState, useEffect, useRef } from 'react';
 import { 
   ShieldCheck, Sparkles, Bell, ShoppingBag, 
   LogOut, User, Settings, ChevronDown, GraduationCap,
-  Clock, CheckCircle, Trash2, MailOpen, Inbox
+  Clock, CheckCircle2, Trash2, MailOpen, Inbox,
+  XCircle, Clock4, AlertTriangle
 } from 'lucide-react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import axios from 'axios';
@@ -79,6 +80,22 @@ const Navbar = () => {
       } catch (error) {
         console.error("Error clearing notifications", error);
       }
+    }
+  };
+
+  // Status Icons Helper
+  const getStatusIcon = (status) => {
+    switch (status) {
+      case 'APPROVED': 
+        return <CheckCircle2 size={22} className="text-emerald-400" />;
+      case 'REJECTED': 
+        return <XCircle size={22} className="text-rose-400" />;
+      case 'PENDING': 
+        return <Clock4 size={22} className="text-amber-400" />;
+      case 'CANCELLED': 
+        return <Trash2 size={22} className="text-gray-400" />;
+      default: 
+        return <GraduationCap size={22} className="text-[#ebc070]" />;
     }
   };
 
@@ -243,11 +260,13 @@ const Navbar = () => {
                               >
                                 <div className="flex gap-4">
                                   <div className={`w-12 h-12 shrink-0 rounded-2xl flex items-center justify-center shadow-inner ${
-                                    notif.type === 'BOOKING' 
-                                      ? 'bg-blue-500/20 text-blue-400' 
-                                      : 'bg-[#ebc070]/20 text-[#ebc070]'
+                                    notif.status === 'APPROVED' ? 'bg-emerald-500/20' :
+                                    notif.status === 'REJECTED' ? 'bg-rose-500/20' :
+                                    notif.status === 'PENDING' ? 'bg-amber-500/20' :
+                                    notif.status === 'CANCELLED' ? 'bg-gray-500/20' :
+                                    'bg-[#ebc070]/20'
                                   }`}>
-                                    {notif.type === 'BOOKING' ? <CheckCircle size={22} /> : <GraduationCap size={22} />}
+                                    {getStatusIcon(notif.status)}
                                   </div>
                                   
                                   <div className="flex flex-col justify-center flex-1 min-w-0">
@@ -258,6 +277,16 @@ const Navbar = () => {
                                       <span className="flex items-center gap-1.5 text-[10px] text-white/30 font-bold uppercase tracking-widest">
                                         <Clock size={12} /> {new Date(notif.createdAt).toLocaleDateString()}
                                       </span>
+                                      {notif.status && (
+                                        <span className={`text-[8px] px-2 py-0.5 rounded-full font-black uppercase tracking-tighter ${
+                                          notif.status === 'APPROVED' ? 'bg-emerald-500/10 text-emerald-400' :
+                                          notif.status === 'REJECTED' ? 'bg-rose-500/10 text-rose-400' :
+                                          notif.status === 'PENDING' ? 'bg-amber-500/10 text-amber-400' :
+                                          'bg-white/5 text-white/40'
+                                        }`}>
+                                          {notif.status}
+                                        </span>
+                                      )}
                                       {!notif.read && (
                                         <span className="flex items-center gap-1">
                                           <span className="w-1.5 h-1.5 bg-[#ebc070] rounded-full animate-pulse"></span>

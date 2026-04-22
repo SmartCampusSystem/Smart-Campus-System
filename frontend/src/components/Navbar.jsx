@@ -45,10 +45,22 @@ const Navbar = () => {
   const fetchNotifications = async () => {
     if (!userEmail) return;
     try {
-      const res = await axios.get(`http://localhost:8082/api/notifications/user/${userEmail}`);
-      const countRes = await axios.get(`http://localhost:8082/api/notifications/user/${userEmail}/unread-count`);
-      setNotifications(res.data);
-      setUnreadCount(countRes.data);
+      // 1. Fetch personal notifications
+      const personalRes = await axios.get(`http://localhost:8082/api/notifications/user/${userEmail}`);
+      
+      // 2. Fetch broadcast notifications (ALL)
+      const broadcastRes = await axios.get(`http://localhost:8082/api/notifications/user/ALL`);
+      
+      // Merge and Sort by Date
+      const combined = [...personalRes.data, ...broadcastRes.data].sort(
+        (a, b) => new Date(b.createdAt) - new Date(a.createdAt)
+      );
+
+      // 3. Get counts for both (or just filter unread from combined)
+      const unread = combined.filter(n => !n.read).length;
+
+      setNotifications(combined);
+      setUnreadCount(unread);
     } catch (error) {
       console.error("Error fetching notifications", error);
     }
@@ -65,7 +77,11 @@ const Navbar = () => {
 
   const markAllAsRead = async () => {
     try {
+      // Mark personal ones as read
       await axios.put(`http://localhost:8082/api/notifications/user/${userEmail}/read-all`);
+      // Mark "ALL" ones as read (if your backend supports it)
+      await axios.put(`http://localhost:8082/api/notifications/user/ALL/read-all`);
+      
       fetchNotifications();
     } catch (error) {
       console.error("Error marking all as read", error);
@@ -94,6 +110,8 @@ const Navbar = () => {
         return <Clock4 size={22} className="text-amber-400" />;
       case 'CANCELLED': 
         return <Trash2 size={22} className="text-gray-400" />;
+      case 'MAINTENANCE':
+        return <AlertTriangle size={22} className="text-amber-500" />;
       default: 
         return <GraduationCap size={22} className="text-[#ebc070]" />;
     }
@@ -266,7 +284,7 @@ const Navbar = () => {
                                     notif.status === 'CANCELLED' ? 'bg-gray-500/20' :
                                     'bg-[#ebc070]/20'
                                   }`}>
-                                    {getStatusIcon(notif.status)}
+                                    {getStatusIcon(notif.status || notif.type)}
                                   </div>
                                   
                                   <div className="flex flex-col justify-center flex-1 min-w-0">
@@ -277,14 +295,14 @@ const Navbar = () => {
                                       <span className="flex items-center gap-1.5 text-[10px] text-white/30 font-bold uppercase tracking-widest">
                                         <Clock size={12} /> {new Date(notif.createdAt).toLocaleDateString()}
                                       </span>
-                                      {notif.status && (
+                                      {(notif.status || notif.type) && (
                                         <span className={`text-[8px] px-2 py-0.5 rounded-full font-black uppercase tracking-tighter ${
                                           notif.status === 'APPROVED' ? 'bg-emerald-500/10 text-emerald-400' :
                                           notif.status === 'REJECTED' ? 'bg-rose-500/10 text-rose-400' :
                                           notif.status === 'PENDING' ? 'bg-amber-500/10 text-amber-400' :
                                           'bg-white/5 text-white/40'
                                         }`}>
-                                          {notif.status}
+                                          {notif.status || notif.type}
                                         </span>
                                       )}
                                       {!notif.read && (

@@ -12,6 +12,7 @@ import AdminHeader from './AdminHeader';
 import BookingManagement from './BookingManagement';
 import ResourcesDashboard from './ResourcesDashboard';
 import UserDirectory from './UserDirectory';
+import AdminNotificationPanel from './AdminNotificationPanel';
 
 const graphData = [
   { name: 'Tue', income: 210 }, { name: 'Wed', income: 380 },
@@ -177,6 +178,7 @@ function AdminDashboard() {
             <Route path="users" element={<UserDirectory users={users} searchTerm={searchTerm} fetchUsers={fetchDashboardData}/>} />
             <Route path="bookings" element={<BookingManagement />} />
             <Route path="resources" element={<ResourcesDashboard />} />
+            <Route path="notifications" element={<AdminNotificationPanel />} />
           </Routes>
         </main>
       </div>

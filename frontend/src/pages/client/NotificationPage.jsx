@@ -3,7 +3,7 @@ import {
   Bell, Calendar, Clock, Inbox, MailOpen, Trash2, 
   CheckCircle2, AlertTriangle, Info, ChevronRight,
   ArrowLeft, Sparkles, Filter, ShieldCheck, XCircle, 
-  Clock4, Ticket, LayoutGrid, ArrowUpDown
+  Clock4, Ticket, LayoutGrid, ArrowUpDown, Monitor
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
@@ -13,7 +13,7 @@ const NotificationPage = () => {
   const [filteredNotifs, setFilteredNotifs] = useState([]);
   const [groupedNotifs, setGroupedNotifs] = useState({});
   const [loading, setLoading] = useState(true);
-  const [activeFilter, setActiveFilter] = useState('ALL'); // ALL, BOOKING, TICKET
+  const [activeFilter, setActiveFilter] = useState('ALL'); // ALL, BOOKING, TICKET, SYSTEM
   const [timeSort, setTimeSort] = useState('LATEST'); // LATEST, OLDEST
   const navigate = useNavigate();
   
@@ -30,7 +30,10 @@ const NotificationPage = () => {
 
     // Category Filter
     if (activeFilter !== 'ALL') {
-      result = result.filter(n => n.type === activeFilter);
+      result = result.filter(n => {
+        if (activeFilter === 'SYSTEM') return n.recipientEmail === 'ALL' || n.type === 'SYSTEM';
+        return n.type === activeFilter;
+      });
     }
 
     // Time Sorting
@@ -48,9 +51,17 @@ const NotificationPage = () => {
     if (!userEmail) return;
     try {
       setLoading(true);
-      const res = await axios.get(`http://localhost:8082/api/notifications/user/${userEmail}`);
-      const data = res.data;
-      setNotifications(data);
+      // Fetch personal notifications
+      const personalRes = await axios.get(`http://localhost:8082/api/notifications/user/${userEmail}`);
+      
+      // Fetch broadcast notifications (ALL)
+      const broadcastRes = await axios.get(`http://localhost:8082/api/notifications/user/ALL`);
+      
+      // Combine and remove duplicates based on ID
+      const combined = [...personalRes.data, ...broadcastRes.data];
+      const uniqueNotifs = Array.from(new Map(combined.map(item => [item.id, item])).values());
+      
+      setNotifications(uniqueNotifs);
     } catch (error) {
       console.error("Error fetching notifications", error);
     } finally {
@@ -95,7 +106,10 @@ const NotificationPage = () => {
     }
   };
 
-  const getStatusIcon = (status) => {
+  const getStatusIcon = (status, type, recipientEmail) => {
+    if (recipientEmail === 'ALL' || type === 'SYSTEM') {
+        return <div className="p-2 bg-indigo-50 rounded-xl"><Monitor className="text-indigo-500" size={22} /></div>;
+    }
     switch (status) {
       case 'APPROVED': 
         return <div className="p-2 bg-emerald-50 rounded-xl"><CheckCircle2 className="text-emerald-500" size={22} /></div>;
@@ -209,6 +223,12 @@ const NotificationPage = () => {
             >
               <Ticket size={14} /> Tickets
             </button>
+            <button 
+              onClick={() => setActiveFilter('SYSTEM')}
+              className={`px-6 py-3 rounded-[20px] text-[10px] font-black uppercase tracking-widest transition-all flex items-center gap-2 ${activeFilter === 'SYSTEM' ? 'bg-indigo-600 text-white shadow-lg' : 'text-gray-400 hover:bg-gray-100'}`}
+            >
+              <Monitor size={14} /> System
+            </button>
           </div>
 
           {/* Time Sorter */}
@@ -251,23 +271,24 @@ const NotificationPage = () => {
                         <div className={`w-16 h-16 shrink-0 rounded-[24px] flex items-center justify-center transition-all group-hover:rotate-6 ${
                           !notif.isRead ? 'bg-gray-50' : 'bg-transparent border border-gray-100'
                         }`}>
-                          {getStatusIcon(notif.status || notif.type)}
+                          {getStatusIcon(notif.status, notif.type, notif.recipientEmail)}
                         </div>
 
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center justify-between gap-4 mb-3">
                             <div className="flex items-center gap-2">
                                <span className={`text-[10px] font-black uppercase tracking-widest ${!notif.isRead ? 'text-[#ebc070]' : 'text-gray-400'}`}>
-                                 {notif.type || 'Activity'}
+                                 {notif.recipientEmail === 'ALL' ? 'SYSTEM ALERT' : (notif.type || 'Activity')}
                                </span>
-                               {notif.status && (
+                               {(notif.status || notif.recipientEmail === 'ALL') && (
                                  <span className={`text-[8px] px-2 py-0.5 rounded-full font-bold uppercase tracking-widest ${
+                                    notif.recipientEmail === 'ALL' ? 'bg-indigo-100 text-indigo-600' :
                                     notif.status === 'APPROVED' ? 'bg-emerald-100 text-emerald-600' :
                                     notif.status === 'REJECTED' ? 'bg-rose-100 text-rose-600' :
                                     notif.status === 'PENDING' ? 'bg-amber-100 text-amber-600' :
                                     'bg-gray-100 text-gray-500'
                                  }`}>
-                                    {notif.status}
+                                    {notif.recipientEmail === 'ALL' ? 'BROADCAST' : notif.status}
                                  </span>
                                )}
                             </div>

@@ -10,20 +10,34 @@ public class Notification {
     private String id;
 
     // Local login එකේ email එක හෝ OAuth එකෙන් එන email එක මෙතනට දාන්න
+    // Admin ට එන ඒවාට "ADMIN" ලෙසද, සැමට යන ඒවාට "ALL" ලෙසද යොදන්න.
     private String recipientEmail; 
     
-    private String message;     // පණිවිඩය (e.g. Your booking is approved)
-    private String type;        // BOOKING, TICKET, හෝ COMMENT
-    private String referenceId; // Booking ID හෝ Ticket ID (Object ID එක)
+    private String senderEmail;     // පණිවිඩය යවන පුද්ගලයා (e.g. Admin's email) - අලුතින් එක් කළ කොටස
+    
+    private String message;         // පණිවිඩය (e.g. Your booking is approved)
+    private String type;            // BOOKING, TICKET, COMMENT හෝ BROADCAST
+    private String referenceId;     // Booking ID හෝ Ticket ID (Object ID එක)
     private boolean isRead;
     private LocalDateTime createdAt;
 
     // Default Constructor
     public Notification() {}
 
-    // පහසුවෙන් Notification එකක් සාදා ගැනීමට Constructor එක
+    // පවතින Constructor එක (මෙය වෙනස් කර නැත - පැරණි UI/Logic බිඳ නොවැටේ)
     public Notification(String recipientEmail, String message, String type, String referenceId) {
         this.recipientEmail = recipientEmail;
+        this.message = message;
+        this.type = type;
+        this.referenceId = referenceId;
+        this.isRead = false;
+        this.createdAt = LocalDateTime.now();
+    }
+
+    // Admin සඳහා අලුතින් එක් කළ Constructor එක (Overloaded)
+    public Notification(String recipientEmail, String senderEmail, String message, String type, String referenceId) {
+        this.recipientEmail = recipientEmail;
+        this.senderEmail = senderEmail; // අලුත් field එක
         this.message = message;
         this.type = type;
         this.referenceId = referenceId;
@@ -37,6 +51,9 @@ public class Notification {
 
     public String getRecipientEmail() { return recipientEmail; }
     public void setRecipientEmail(String recipientEmail) { this.recipientEmail = recipientEmail; }
+
+    public String getSenderEmail() { return senderEmail; } // New Getter
+    public void setSenderEmail(String senderEmail) { this.senderEmail = senderEmail; } // New Setter
 
     public String getMessage() { return message; }
     public void setMessage(String message) { this.message = message; }

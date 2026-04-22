@@ -10,8 +10,12 @@ public interface NotificationRepository extends MongoRepository<Notification, St
     
     long countByRecipientEmailAndIsReadFalse(String email);
 
-    // --- පහත පේළි දෙක අලුතින් එකතු කරන්න ---
+    // --- පහත පේළි දෙක අලුතින් එකතු කළා ---
+    
+    // කියවා නැති පණිවිඩ ලැයිස්තුව පමණක් ලබා ගැනීමට
     List<Notification> findByRecipientEmailAndIsReadFalse(String email);
     
+    // ඕනෑම email එකකට අදාළ (උදා: "ADMIN" හෝ "ALL") පණිවිඩ ලැයිස්තුව ලබා ගැනීමට
     List<Notification> findByRecipientEmail(String email);
+    List<Notification> findByTypeOrderByCreatedAtDesc(String type);
 }

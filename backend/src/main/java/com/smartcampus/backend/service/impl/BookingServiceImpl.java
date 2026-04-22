@@ -3,7 +3,7 @@ package com.smartcampus.backend.service.impl;
 import com.smartcampus.backend.model.Booking;
 import com.smartcampus.backend.repository.BookingRepository;
 import com.smartcampus.backend.service.BookingService;
-import com.smartcampus.backend.service.NotificationService; // 👈 Add this
+import com.smartcampus.backend.service.NotificationService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import java.util.List;
@@ -16,7 +16,7 @@ public class BookingServiceImpl implements BookingService {
     private BookingRepository bookingRepository;
 
     @Autowired
-    private NotificationService notificationService; // 👈 Inject NotificationService
+    private NotificationService notificationService;
 
     @Override
     public Booking createBooking(Booking booking) {
@@ -31,7 +31,19 @@ public class BookingServiceImpl implements BookingService {
         }
 
         booking.setStatus(Booking.BookingStatus.PENDING);
-        return bookingRepository.save(booking);
+        Booking savedBooking = bookingRepository.save(booking);
+
+        // ✅ Admin හට Alert එකක් යැවීමේ Logic එක:
+        String adminAlertMessage = "New Booking Request from " + savedBooking.getUserEmail() + " for " + savedBooking.getResourceId();
+        notificationService.createNotification(
+                "ADMIN", 
+                "SYSTEM", 
+                adminAlertMessage, 
+                "ALERT", 
+                savedBooking.getId()
+        );
+
+        return savedBooking;
     }
 
     @Override
@@ -62,7 +74,7 @@ public class BookingServiceImpl implements BookingService {
         
         Booking updatedBooking = bookingRepository.save(booking);
 
-        // ✅ Notification Logic එක මෙතනට:
+        // ✅ Notification Logic එක:
         String message = "Your booking for " + booking.getResourceId() + " has been " + status;
         if (status == Booking.BookingStatus.REJECTED && reason != null) {
             message += ". Reason: " + reason;

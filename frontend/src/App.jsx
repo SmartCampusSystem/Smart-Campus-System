@@ -11,6 +11,8 @@ import BookingsHub from './pages/client/BookingsHub';
 import SupportPage from './pages/client/SupportPage';
 import NotificationPage from './pages/client/NotificationPage';
 import ProfilePage from './pages/client/ProfilePage';
+import BookingDetails from './pages/client/BookingsDetails';
+import AdminBookingDetails from './pages/admin/AdminBookingDetails';
 
 
 
@@ -30,6 +32,8 @@ function App() {
         <Route path="/support" element={<SupportPage />} />
         <Route path="/notifications" element={<NotificationPage />} />
         <Route path="/profile" element={<ProfilePage />} />
+        <Route path="/bookings/:id" element={<BookingDetails />} />
+        <Route path="/admin/bookings/:id" element={<AdminBookingDetails />} />
         
       </Routes>
     </BrowserRouter>

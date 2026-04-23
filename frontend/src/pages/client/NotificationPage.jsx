@@ -3,7 +3,7 @@ import {
   Bell, Calendar, Clock, Inbox, MailOpen, Trash2, 
   CheckCircle2, AlertTriangle, Info, ChevronRight,
   ArrowLeft, Sparkles, Filter, ShieldCheck, XCircle, 
-  Clock4, Ticket, LayoutGrid, ArrowUpDown, Monitor
+  Clock4, Ticket, LayoutGrid, ArrowUpDown, Monitor, Hash
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
@@ -51,13 +51,8 @@ const NotificationPage = () => {
     if (!userEmail) return;
     try {
       setLoading(true);
-      // Fetch personal notifications
       const personalRes = await axios.get(`http://localhost:8082/api/notifications/user/${userEmail}`);
-      
-      // Fetch broadcast notifications (ALL)
       const broadcastRes = await axios.get(`http://localhost:8082/api/notifications/user/ALL`);
-      
-      // Combine and remove duplicates based on ID
       const combined = [...personalRes.data, ...broadcastRes.data];
       const uniqueNotifs = Array.from(new Map(combined.map(item => [item.id, item])).values());
       
@@ -105,6 +100,30 @@ const NotificationPage = () => {
       } catch (error) { console.error(error); }
     }
   };
+
+  // --- ID HIGHLIGHT LOGIC START ---
+  const formatMessage = (message) => {
+    const idRegex = /[a-f\d]{24}/gi; // Detects MongoDB style IDs
+    
+    const parts = message.split(idRegex);
+    const matches = message.match(idRegex);
+
+    if (!matches) return message;
+
+    return parts.reduce((acc, part, i) => {
+      acc.push(part);
+      if (matches[i]) {
+        acc.push(
+          <span key={i} className="inline-flex items-center gap-1 px-2 py-0.5 bg-emerald-50 border border-emerald-100 rounded-lg text-emerald-700 text-[13px] font-black mx-1 tracking-wider">
+            <Hash size={12} className="text-emerald-500" />
+            REF-{matches[i].slice(-8).toUpperCase()}
+          </span>
+        );
+      }
+      return acc;
+    }, []);
+  };
+  // --- ID HIGHLIGHT LOGIC END ---
 
   const getStatusIcon = (status, type, recipientEmail) => {
     if (recipientEmail === 'ALL' || type === 'SYSTEM') {
@@ -298,7 +317,7 @@ const NotificationPage = () => {
                           </div>
                           
                           <p className={`text-[17px] leading-snug tracking-tight mb-6 ${!notif.isRead ? 'font-bold text-[#0c5252]' : 'font-medium text-gray-500'}`}>
-                            {notif.message}
+                            {formatMessage(notif.message)}
                           </p>
 
                           <div className="flex items-center justify-between border-t border-gray-50 pt-5">

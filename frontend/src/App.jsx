@@ -9,8 +9,8 @@ import BookResource from './pages/client/BookResource';
 import MyBookings from './pages/client/MyBookings';
 import BookingsHub from './pages/client/BookingsHub';
 import SupportPage from './pages/client/SupportPage';
-
-
+import Tickets from './pages/client/Tickets';
+import TechnicianDashboard from './pages/technician/TechnicianDashboard';
 
 function App() {
   return (
@@ -20,12 +20,14 @@ function App() {
         <Route path="/" element={<Home />} />
         <Route path="/login" element={<Login />} />
         <Route path="/admin/*" element={<AdminDashboard />} />
+        <Route path="/technician/*" element={<TechnicianDashboard />} />
         <Route path="/register" element={<Register />} />
         <Route path="/resources" element={<Resources />} />
         <Route path="/book/:id" element={<BookResource />} />
         <Route path="/my-bookings" element={<MyBookings />} />
         <Route path="/bookings" element={<BookingsHub />} />
         <Route path="/support" element={<SupportPage />} />
+        <Route path="/tickets" element={<Tickets />} />
         
       </Routes>
     </BrowserRouter>

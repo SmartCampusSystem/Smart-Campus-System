@@ -9,4 +9,5 @@ public interface BookingService {
     void cancelBooking(String id);
     List<Booking> getAllBookings();
     Booking updateBookingStatus(String id, Booking.BookingStatus status, String reason);
+    Booking getBookingById(String id);
 }

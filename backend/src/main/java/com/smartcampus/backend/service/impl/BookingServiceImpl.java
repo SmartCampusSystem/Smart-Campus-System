@@ -27,13 +27,13 @@ public class BookingServiceImpl implements BookingService {
         );
 
         if (!conflicts.isEmpty()) {
-            throw new RuntimeException("මෙම වේලාව තුළ මෙම සම්පත දැනටමත් වෙන්කර ඇත.");
+            throw new RuntimeException("This resource is already booked for the selected time period.");
         }
 
         booking.setStatus(Booking.BookingStatus.PENDING);
         Booking savedBooking = bookingRepository.save(booking);
 
-        // ✅ Admin හට Alert එකක් යැවීමේ Logic එක:
+        // ✅ Logic for sending Admin Alert:
         String adminAlertMessage = "New Booking Request from " + savedBooking.getUserEmail() + " for " + savedBooking.getResourceId();
         notificationService.createNotification(
                 "ADMIN", 
@@ -61,20 +61,28 @@ public class BookingServiceImpl implements BookingService {
     @Override
     public Booking updateBookingStatus(String id, Booking.BookingStatus status, String reason) {
         Booking booking = bookingRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Booking එක හමු නොවීය."));
+                .orElseThrow(() -> new RuntimeException("Booking not found."));
         
-        if(booking.getStatus() == Booking.BookingStatus.CANCELLED) {
-            throw new RuntimeException("මෙම වෙන් කිරීම දැනටමත් අවලංගු කර ඇත.");
-        }
+        // --- Modified Section Start ---
+        
+        // Removed the previous restriction (where Cancelled bookings couldn't be updated)
+        // Now any status can be updated to APPROVED.
 
         booking.setStatus(status);
+
         if (status == Booking.BookingStatus.REJECTED) {
             booking.setRejectionReason(reason);
+        } 
+        // Clear previous rejection reason when re-approving or setting to Pending
+        else if (status == Booking.BookingStatus.APPROVED || status == Booking.BookingStatus.PENDING) {
+            booking.setRejectionReason(null);
         }
+
+        // --- Modified Section End ---
         
         Booking updatedBooking = bookingRepository.save(booking);
 
-        // ✅ Notification Logic එක:
+        // ✅ Notification Logic:
         String message = "Your booking for " + booking.getResourceId() + " has been " + status;
         if (status == Booking.BookingStatus.REJECTED && reason != null) {
             message += ". Reason: " + reason;
@@ -85,18 +93,24 @@ public class BookingServiceImpl implements BookingService {
     }
 
     @Override
+    public Booking getBookingById(String id) {
+        return bookingRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Booking not found. ID: " + id));
+    }
+
+    @Override
     public void cancelBooking(String id) {
         Booking booking = bookingRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Booking එක හමු නොවීය."));
+                .orElseThrow(() -> new RuntimeException("Booking not found."));
         
         if(booking.getStatus() == Booking.BookingStatus.REJECTED) {
-            throw new RuntimeException("ප්‍රතික්ෂේප කළ වෙන් කිරීමක් අවලංගු කළ නොහැක.");
+            throw new RuntimeException("Cannot cancel a booking that has already been rejected.");
         }
 
         booking.setStatus(Booking.BookingStatus.CANCELLED);
         bookingRepository.save(booking);
 
-        // ✅ Cancel කිරීමේදී notification එකක් යැවීම
+        // ✅ Send notification upon cancellation
         notificationService.createNotification(
             booking.getUserEmail(), 
             "Booking for " + booking.getResourceId() + " was successfully CANCELLED.", 

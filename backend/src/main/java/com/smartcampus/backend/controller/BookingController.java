@@ -47,6 +47,23 @@ public class BookingController {
         return ResponseEntity.ok(bookingService.getAllBookings());
     }
 
+    // 6. ID එක මගින් තනි Booking එකක විස්තර ලබා ගැනීම
+@GetMapping("/{id}")
+public ResponseEntity<?> getBookingById(@PathVariable String id, Principal principal) {
+    if (principal == null) {
+        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Login required");
+    }
+    
+    Booking booking = bookingService.getBookingById(id);
+    
+    // ආරක්ෂාව සඳහා: බුකින් එක අයිති පුද්ගලයා හෝ Admin කෙනෙක් පමණක් දත්ත දැකිය යුතුයි නම්:
+    // if (!booking.getUserEmail().equals(principal.getName())) {
+    //     return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+    // }
+
+    return ResponseEntity.ok(booking);
+}
+
     // 4. Status වෙනස් කිරීම සහ 5. Cancel කිරීම ඔබ එවූ පරිදිම පවතී...
     @PutMapping("/{id}/status")
     public ResponseEntity<Booking> updateStatus(

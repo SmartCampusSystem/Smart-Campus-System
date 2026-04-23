@@ -1,8 +1,10 @@
 package com.smartcampus.backend.repository;
 
 import com.smartcampus.backend.model.User;
+import com.smartcampus.backend.model.Role;
 import org.springframework.data.mongodb.repository.MongoRepository; // JPA වෙනුවට MongoDB Repository
 import org.springframework.stereotype.Repository;
+import java.util.List;
 import java.util.Optional;
 
 @Repository
@@ -13,6 +15,9 @@ public interface UserRepository extends MongoRepository<User, String> { // ID ty
 
     // Email එක දැනටමත් පද්ධතියේ තිබේදැයි බැලීමට (Registration validation සඳහා)
     Boolean existsByEmail(String email);
+    
+    // Role එක මගින් පරිශීලකයන් සෙවීමට (Technician assignment සඳහා)
+    List<User> findByRole(Role role);
     
     // අවශ්‍ය නම් provider අනුව පරිශීලකයන් සෙවීමට
     // List<User> findByProvider(String provider);

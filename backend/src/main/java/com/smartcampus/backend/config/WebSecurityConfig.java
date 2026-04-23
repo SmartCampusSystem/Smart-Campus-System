@@ -72,13 +72,14 @@ public class WebSecurityConfig {
             )
 
             .exceptionHandling(exception -> exception
+
                 .authenticationEntryPoint(new HttpStatusEntryPoint(HttpStatus.UNAUTHORIZED))
             )
 
             .authorizeHttpRequests(auth -> auth
                 // OPTIONS requests වලට සැමවිටම අවසර දීම (CORS සඳහා)
                 .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
-                .requestMatchers("/", "/login**", "/error**", "/oauth2/**", "/api/auth/**", "/api/resources/**").permitAll()
+                .requestMatchers("/", "/login**", "/error**", "/oauth2/**", "/api/auth/**", "/api/resources/**","/api/tickets/**").permitAll()
                 
                 // පරීක්ෂා කිරීමේ පහසුව සඳහා notifications endpoint එක දැනට permitAll කිරීම
                 .requestMatchers("/api/notifications/**").permitAll()

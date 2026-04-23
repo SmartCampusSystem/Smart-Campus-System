@@ -53,7 +53,7 @@ function Login() {
 
         // Role එක අනුව Navigate කිරීම
         if (userData.role === 'ADMIN') navigate('/admin/*');
-        else if (userData.role === 'TECHNICIAN') navigate('/tech/dashboard');
+        else if (userData.role === 'TECHNICIAN') navigate('/technician');
         else navigate('/');
 
       }

@@ -11,6 +11,10 @@ import BookingsHub from './pages/client/BookingsHub';
 import SupportPage from './pages/client/SupportPage';
 import Tickets from './pages/client/Tickets';
 import TechnicianDashboard from './pages/technician/TechnicianDashboard';
+import NotificationPage from './pages/client/NotificationPage';
+import ProfilePage from './pages/client/ProfilePage';
+
+
 
 function App() {
   return (
@@ -28,6 +32,8 @@ function App() {
         <Route path="/bookings" element={<BookingsHub />} />
         <Route path="/support" element={<SupportPage />} />
         <Route path="/tickets" element={<Tickets />} />
+        <Route path="/notifications" element={<NotificationPage />} />
+        <Route path="/profile" element={<ProfilePage />} />
         
       </Routes>
     </BrowserRouter>

@@ -20,6 +20,7 @@ import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.HttpMethod;
 
 import java.util.Arrays;
 
@@ -71,15 +72,22 @@ public class WebSecurityConfig {
             )
 
             .exceptionHandling(exception -> exception
-                // 
+
                 .authenticationEntryPoint(new HttpStatusEntryPoint(HttpStatus.UNAUTHORIZED))
             )
 
             .authorizeHttpRequests(auth -> auth
-                .requestMatchers("/", "/login**", "/error**", "/oauth2/**", "/api/auth/**", "/api/resources/**", "/api/tickets/**").permitAll()
+                // OPTIONS requests වලට සැමවිටම අවසර දීම (CORS සඳහා)
+                .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
+                .requestMatchers("/", "/login**", "/error**", "/oauth2/**", "/api/auth/**", "/api/resources/**","/api/tickets/**").permitAll()
+                
+                // පරීක්ෂා කිරීමේ පහසුව සඳහා notifications endpoint එක දැනට permitAll කිරීම
+                .requestMatchers("/api/notifications/**").permitAll()
+                
                 .requestMatchers("/api/bookings/**", "/api/users/me", "/api/users/by-email").authenticated()
                 .anyRequest().authenticated()
             )
+            
             .formLogin(form -> form
                 .loginProcessingUrl("/api/auth/login")
                 .successHandler((request, response, authentication) -> {

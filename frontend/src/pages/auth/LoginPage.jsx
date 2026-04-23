@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Mail, Lock, Loader2, Eye, EyeOff, ArrowRight, ShieldCheck, Fingerprint, Activity } from 'lucide-react';
+import { Mail, Lock, Loader2, Eye, EyeOff, ArrowRight, ShieldCheck, Fingerprint, Activity, AlertCircle, CheckCircle2 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
@@ -12,50 +12,91 @@ function Login() {
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
+  
+  // Validation States
+  const [errors, setErrors] = useState({ email: '', password: '' });
+  const [touched, setTouched] = useState({ email: false, password: false });
+
   const navigate = useNavigate();
 
+  // Live Validation Logic
+  const validateEmail = (val) => {
+    if (!val) return 'Email is required';
+    if (!/\S+@\S+\.\S+/.test(val)) return 'Please enter a valid email address';
+    return '';
+  };
+
+  const validatePassword = (val) => {
+    if (!val) return 'Password is required';
+    if (val.length < 6) return 'Password must be at least 6 characters';
+    return '';
+  };
+
+  const handleEmailChange = (e) => {
+    const val = e.target.value;
+    setEmail(val);
+    if (touched.email) {
+      setErrors(prev => ({ ...prev, email: validateEmail(val) }));
+    }
+  };
+
+  const handlePasswordChange = (e) => {
+    const val = e.target.value;
+    setPassword(val);
+    if (touched.password) {
+      setErrors(prev => ({ ...prev, password: validatePassword(val) }));
+    }
+  };
+
+  const handleBlur = (field) => {
+    setTouched(prev => ({ ...prev, [field]: true }));
+    if (field === 'email') setErrors(prev => ({ ...prev, email: validateEmail(email) }));
+    if (field === 'password') setErrors(prev => ({ ...prev, password: validatePassword(password) }));
+  };
+
   const handleGoogleLogin = () => {
-    // Google OAuth සඳහා කෙලින්ම redirect කිරීම
     window.location.href = 'http://localhost:8082/oauth2/authorization/google';
   };
 
   const handleEmailLogin = async (e) => {
     e.preventDefault();
-    setLoading(true);
     
-    // Spring Security formLogin බලාපොරොත්තු වන ආකාරයට දත්ත සැකසීම
+    // Final validation check
+    const emailErr = validateEmail(email);
+    const passErr = validatePassword(password);
+    
+    if (emailErr || passErr) {
+      setErrors({ email: emailErr, password: passErr });
+      setTouched({ email: true, password: true });
+      toast.error('Please correct the errors before signing in.');
+      return;
+    }
+
+    setLoading(true);
     const params = new URLSearchParams();
     params.append('username', email);
     params.append('password', password);
 
     try {
-      // 1. Login Request එක - withCredentials අනිවාර්යයි
       const loginResponse = await axios.post('http://localhost:8082/api/auth/login', params, {
         headers: { 'Content-Type': 'application/x-www-form-urlencoded' }
       });
 
       if (loginResponse.status === 200) {
-        // 2. User Details ලබා ගැනීම - මෙවිට Cookie එක ස්වයංක්‍රීයව යවනු ලබයි
         const userDetailsResponse = await axios.get(
           `http://localhost:8082/api/users/by-email?email=${encodeURIComponent(email)}`
         );
 
         const userData = userDetailsResponse.data;
-
-        // LocalStorage එකේ දත්ත තැන්පත් කිරීම
         localStorage.setItem('token', 'authenticated_session');
         localStorage.setItem('user', JSON.stringify(userData));
-        
-        // Navbar එකට දැනුම් දීම
         window.dispatchEvent(new Event("storage"));
 
         toast.success(`Welcome back, ${userData.name}!`);
 
-        // Role එක අනුව Navigate කිරීම
         if (userData.role === 'ADMIN') navigate('/admin/*');
         else if (userData.role === 'TECHNICIAN') navigate('/tech/dashboard');
         else navigate('/');
-
       }
     } catch (error) {
       console.error("Login Error:", error);
@@ -113,43 +154,69 @@ function Login() {
                 <div className="flex-grow border-t border-slate-100"></div>
               </div>
 
-              <form onSubmit={handleEmailLogin} className="space-y-4">
+              <form onSubmit={handleEmailLogin} className="space-y-4" noValidate>
                 <div className="space-y-1.5">
-                  <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest ml-1">Email</label>
+                  <div className="flex justify-between items-center ml-1">
+                    <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Email</label>
+                    {touched.email && !errors.email && <CheckCircle2 size={12} className="text-emerald-500" />}
+                  </div>
                   <div className="relative group">
-                    <Mail className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-[#0c5252] transition-colors" size={16} />
+                    <Mail className={`absolute left-4 top-1/2 -translate-y-1/2 transition-colors ${errors.email && touched.email ? 'text-red-400' : 'text-slate-400 group-focus-within:text-[#0c5252]'}`} size={16} />
                     <input
-                      className="w-full pl-11 pr-4 py-3 bg-slate-50 border border-transparent focus:border-[#0c5252]/20 focus:bg-white focus:ring-4 focus:ring-[#0c5252]/5 rounded-xl text-slate-900 font-semibold transition-all outline-none text-sm"
+                      className={`w-full pl-11 pr-4 py-3 border rounded-xl font-semibold transition-all outline-none text-sm ${
+                        errors.email && touched.email 
+                        ? 'bg-red-50 border-red-200 focus:border-red-300 focus:ring-4 focus:ring-red-500/5' 
+                        : 'bg-slate-50 border-transparent focus:border-[#0c5252]/20 focus:bg-white focus:ring-4 focus:ring-[#0c5252]/5'
+                      }`}
                       type="email"
                       placeholder="email@campus.ac.lk"
                       value={email}
-                      onChange={(e) => setEmail(e.target.value)}
+                      onChange={handleEmailChange}
+                      onBlur={() => handleBlur('email')}
                       required
                     />
                   </div>
+                  {errors.email && touched.email && (
+                    <p className="text-[10px] text-red-500 font-bold flex items-center gap-1 mt-1 ml-1 animate-in fade-in slide-in-from-top-1">
+                      <AlertCircle size={10} /> {errors.email}
+                    </p>
+                  )}
                 </div>
 
                 <div className="space-y-1.5">
-                  <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest ml-1">Password</label>
+                  <div className="flex justify-between items-center ml-1">
+                    <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Password</label>
+                    {touched.password && !errors.password && <CheckCircle2 size={12} className="text-emerald-500" />}
+                  </div>
                   <div className="relative group">
-                    <Lock className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-[#0c5252] transition-colors" size={16} />
+                    <Lock className={`absolute left-4 top-1/2 -translate-y-1/2 transition-colors ${errors.password && touched.password ? 'text-red-400' : 'text-slate-400 group-focus-within:text-[#0c5252]'}`} size={16} />
                     <input
-                      className="w-full pl-11 pr-11 py-3 bg-slate-50 border border-transparent focus:border-[#0c5252]/20 focus:bg-white focus:ring-4 focus:ring-[#0c5252]/5 rounded-xl text-slate-900 font-semibold transition-all outline-none text-sm"
+                      className={`w-full pl-11 pr-11 py-3 border rounded-xl font-semibold transition-all outline-none text-sm ${
+                        errors.password && touched.password 
+                        ? 'bg-red-50 border-red-200 focus:border-red-300 focus:ring-4 focus:ring-red-500/5' 
+                        : 'bg-slate-50 border-transparent focus:border-[#0c5252]/20 focus:bg-white focus:ring-4 focus:ring-[#0c5252]/5'
+                      }`}
                       type={showPassword ? "text" : "password"}
                       placeholder="••••••••"
                       value={password}
-                      onChange={(e) => setPassword(e.target.value)}
+                      onChange={handlePasswordChange}
+                      onBlur={() => handleBlur('password')}
                       required
                     />
                     <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-[#0c5252]">
                       {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
                     </button>
                   </div>
+                  {errors.password && touched.password && (
+                    <p className="text-[10px] text-red-500 font-bold flex items-center gap-1 mt-1 ml-1 animate-in fade-in slide-in-from-top-1">
+                      <AlertCircle size={10} /> {errors.password}
+                    </p>
+                  )}
                 </div>
 
                 <button 
                   disabled={loading}
-                  className="w-full py-3.5 bg-[#0c5252] text-white font-bold text-xs uppercase tracking-widest rounded-xl shadow-lg shadow-[#0c5252]/20 hover:bg-[#154646] transition-all flex items-center justify-center gap-2 mt-4"
+                  className="w-full py-3.5 bg-[#0c5252] text-white font-bold text-xs uppercase tracking-widest rounded-xl shadow-lg shadow-[#0c5252]/20 hover:bg-[#154646] transition-all flex items-center justify-center gap-2 mt-4 active:scale-95 disabled:opacity-70 disabled:active:scale-100"
                   type="submit"
                 >
                   {loading ? <Loader2 className="animate-spin" size={18} /> : (
@@ -187,7 +254,7 @@ function Login() {
             
             <div className="aspect-video relative group">
               <img 
-                src="https://i.pinimg.com/1200x/ad/2f/3a/ad2f3a9dbf640cf6cd22b9ca12f90d17.jpg" 
+                src="https://images.unsplash.com/photo-1497366754035-f200968a6e72?q=80&w=2069&auto=format&fit=crop" 
                 className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" 
                 alt="System Interface" 
               />

@@ -21,6 +21,8 @@ public interface TicketService {
 
     List<TicketResponseDTO> getByTechnician(String technicianEmail);
 
+    List<Object> getWeeklyDataByTechnician(String technicianEmail);
+
     TicketResponseDTO update(String id, TicketRequestDTO request, String requesterEmail);
 
     void delete(String id, String requesterEmail);

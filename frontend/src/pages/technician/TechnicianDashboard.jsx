@@ -18,20 +18,19 @@ import TechnicianInProgress from './TechnicianInProgress';
 import TechnicianResolved from './TechnicianResolved';
 import TechnicianClose from './TechnicianClose';
 
-const graphData = [
-  { name: 'Mon', tickets: 12 }, { name: 'Tue', tickets: 18 },
-  { name: 'Wed', tickets: 15 }, { name: 'Thu', tickets: 22 },
-  { name: 'Fri', tickets: 28 }, { name: 'Sat', tickets: 20 },
-  { name: 'Sun', tickets: 16 },
-];
-
 function TechnicianDashboard() {
   const [tickets, setTickets] = useState([]);
   const [loading, setLoading] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [technicianName, setTechnicianName] = useState('Technician');
-  
+  const [graphData, setGraphData] = useState([
+    { name: 'Mon', tickets: 0 }, { name: 'Tue', tickets: 0 },
+    { name: 'Wed', tickets: 0 }, { name: 'Thu', tickets: 0 },
+    { name: 'Fri', tickets: 0 }, { name: 'Sat', tickets: 0 },
+    { name: 'Sun', tickets: 0 },
+  ]);
+
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -49,22 +48,78 @@ function TechnicianDashboard() {
       const token = localStorage.getItem('token');
       const headers = { Authorization: `Bearer ${token}` };
 
-      const [ticketsRes] = await Promise.all([
-        api.get('/tickets', { headers })
-      ]);
-
+      // Fetch tickets first
+      const ticketsRes = await api.get('/tickets/assigned', { headers });
       setTickets(Array.isArray(ticketsRes.data) ? ticketsRes.data : []);
+      
+      // Try to fetch weekly data, but don't fail if it doesn't work
+      try {
+        const weeklyRes = await api.get('/tickets/weekly', { headers });
+        console.log('Weekly API response:', weeklyRes);
+        
+        if (weeklyRes.data && Array.isArray(weeklyRes.data) && weeklyRes.data.length > 0) {
+          console.log('Setting graph data from API:', weeklyRes.data);
+          setGraphData(weeklyRes.data);
+        } else {
+          console.log('Weekly API returned no data, generating from tickets');
+          // Generate weekly data from assigned tickets
+          generateWeeklyDataFromTickets(ticketsRes.data);
+        }
+      } catch (weeklyError) {
+        console.log('Weekly API failed, generating from tickets:', weeklyError);
+        // Generate weekly data from assigned tickets
+        generateWeeklyDataFromTickets(ticketsRes.data);
+      }
     } catch (error) {
       console.error('Error fetching technician data:', error);
       toast.error('Failed to load dashboard data');
+      // Set fallback data with specific example (5 vs 10 tickets) to test exact proportional scaling
+      setGraphData([
+        { name: 'Mon', tickets: 2 }, { name: 'Tue', tickets: 5 },
+        { name: 'Wed', tickets: 3 }, { name: 'Thu', tickets: 5 },
+        { name: 'Fri', tickets: 10 }, { name: 'Sat', tickets: 1 },
+        { name: 'Sun', tickets: 0 },
+      ]);
     } finally {
       setLoading(false);
     }
   };
 
+  const generateWeeklyDataFromTickets = (tickets) => {
+    const days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+    const now = new Date();
+    const currentDayIndex = now.getDay(); // Sunday=0, Monday=1, ..., Saturday=6
+    const mondayIndex = currentDayIndex === 0 ? 6 : currentDayIndex - 1; // Adjust to make Monday=0
+    
+    const weeklyData = days.map((day, index) => {
+      // Calculate the actual date for this day of the week
+      const dayDate = new Date(now);
+      dayDate.setDate(now.getDate() - mondayIndex + index);
+      
+      // Count tickets created on this specific day
+      const dayTickets = tickets.filter(ticket => {
+        if (!ticket.createdAt) return false;
+        const ticketDate = new Date(ticket.createdAt);
+        return ticketDate.toDateString() === dayDate.toDateString();
+      }).length;
+      
+      return { name: day, tickets: dayTickets };
+    });
+    console.log('Generated weekly data from actual tickets:', weeklyData);
+    setGraphData(weeklyData);
+  };
+
   useEffect(() => {
     fetchTechnicianData();
   }, []);
+
+  // Refresh chart data whenever tickets are updated
+  useEffect(() => {
+    if (tickets.length > 0) {
+      // Re-generate weekly data when tickets change
+      generateWeeklyDataFromTickets(tickets);
+    }
+  }, [tickets]);
 
   const DashboardOverview = () => (
     <div className="max-w-[1600px] mx-auto space-y-10 animate-in fade-in slide-in-from-bottom-8 duration-1000 ease-out">
@@ -136,15 +191,31 @@ function TechnicianDashboard() {
             </div>
             <div className="h-[320px] w-full">
               <div className="flex items-end justify-between h-full px-4">
-                {graphData.map((item, index) => (
-                  <div key={index} className="flex flex-col items-center flex-1">
-                    <div 
-                      className="w-full bg-gradient-to-t from-[#0c5252] to-emerald-400 rounded-t-lg transition-all hover:from-emerald-500 hover:to-emerald-300"
-                      style={{ height: `${(item.tickets / 30) * 100}%` }}
-                    ></div>
-                    <span className="text-xs text-slate-600 mt-2">{item.name}</span>
-                  </div>
-                ))}
+                {console.log('Rendering chart with graphData:', graphData)}
+                {graphData.map((item, index) => {
+                  const maxTickets = Math.max(...graphData.map(d => d.tickets), 1);
+                  // Use absolute pixel heights for dramatic visual differences
+                  const maxHeight = 280; // Maximum height in pixels
+                  const exactHeight = (item.tickets / maxTickets) * maxHeight;
+                  
+                  console.log(`Bar ${item.name}: tickets=${item.tickets}, max=${maxTickets}, height=${exactHeight.toFixed(1)}px`);
+                  console.log(`Example: If max=${maxTickets}, then 5 tickets = ${(5/maxTickets*maxHeight).toFixed(1)}px, 10 tickets = ${(10/maxTickets*maxHeight).toFixed(1)}px`);
+                  
+                  return (
+                    <div key={index} className="flex flex-col items-center flex-1">
+                      <div 
+                        className="w-full bg-gradient-to-t from-[#0c5252] to-emerald-400 rounded-t-lg transition-all hover:from-emerald-500 hover:to-emerald-300"
+                        style={{ 
+                          height: `${exactHeight}px`, // Absolute pixel height for clear visual differences
+                          minHeight: item.tickets > 0 ? '8px' : '0px' // Minimum visible height
+                        }}
+                        title={`${item.name}: ${item.tickets} tickets (${exactHeight.toFixed(1)}px)`}
+                      ></div>
+                      <span className="text-xs text-slate-600 mt-2">{item.name}</span>
+                      <span className="text-xs font-bold text-emerald-600">{item.tickets}</span>
+                    </div>
+                  );
+                })}
               </div>
             </div>
           </div>

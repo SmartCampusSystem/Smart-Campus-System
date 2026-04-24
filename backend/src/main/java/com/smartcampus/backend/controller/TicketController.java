@@ -137,7 +137,27 @@ public class TicketController {
     }
 
     // ─────────────────────────────────────────────────────────────────────
-    // 4. FILTER TICKETS   GET /api/tickets/filter?status=&priority=
+    // 4. GET ASSIGNED TICKETS   GET /api/tickets/assigned
+    // ─────────────────────────────────────────────────────────────────────
+    @GetMapping("/assigned")
+    public ResponseEntity<?> getAssignedTickets(Authentication auth) {
+        String email = resolveEmail(auth);
+        if (email == null) return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Login required.");
+        return ResponseEntity.ok(ticketService.getByTechnician(email));
+    }
+
+    // ─────────────────────────────────────────────────────────────────────
+    // 5. GET WEEKLY TICKET DATA   GET /api/tickets/weekly
+    // ─────────────────────────────────────────────────────────────────────
+    @GetMapping("/weekly")
+    public ResponseEntity<?> getWeeklyTicketData(Authentication auth) {
+        String email = resolveEmail(auth);
+        if (email == null) return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Login required.");
+        return ResponseEntity.ok(ticketService.getWeeklyDataByTechnician(email));
+    }
+
+    // ─────────────────────────────────────────────────────────────────────
+    // 5. FILTER TICKETS   GET /api/tickets/filter?status=&priority=
     // ─────────────────────────────────────────────────────────────────────
     @GetMapping("/filter")
     public ResponseEntity<?> filterTickets(

@@ -95,6 +95,59 @@ public class TicketServiceImpl implements TicketService {
     }
 
     @Override
+    public List<Object> getWeeklyDataByTechnician(String technicianEmail) {
+        System.out.println("DEBUG: Getting weekly data for technician: " + technicianEmail);
+        
+        List<Ticket> technicianTickets = ticketRepository.findByAssignedTechnician(technicianEmail);
+        System.out.println("DEBUG: Found " + technicianTickets.size() + " tickets assigned to technician");
+        
+        // Get current week data - fix the day calculation
+        LocalDateTime now = LocalDateTime.now();
+        java.time.DayOfWeek currentDay = now.getDayOfWeek();
+        System.out.println("DEBUG: Current day of week: " + currentDay + " (value: " + currentDay.getValue() + ")");
+        
+        // Java DayOfWeek: Monday=1, Tuesday=2, ..., Sunday=7
+        // Calculate Monday of current week
+        int daysFromMonday = currentDay.getValue() - 1; // Monday = 0, Tuesday = 1, etc.
+        LocalDateTime weekStart = now.minusDays(daysFromMonday).withHour(0).withMinute(0).withSecond(0).withNano(0);
+        System.out.println("DEBUG: Current week start (Monday): " + weekStart);
+        
+        // Initialize weekly data
+        List<Object> weeklyData = new ArrayList<>();
+        String[] days = {"Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"};
+        
+        for (int i = 0; i < 7; i++) {
+            final int dayIndex = i;
+            LocalDateTime dayStart = weekStart.plusDays(i);
+            LocalDateTime dayEnd = dayStart.plusDays(1).minusSeconds(1);
+            
+            System.out.println("DEBUG: Processing " + days[dayIndex] + " from " + dayStart + " to " + dayEnd);
+            
+            // Count tickets created on this day
+            int ticketsCount = (int) technicianTickets.stream()
+                    .filter(ticket -> {
+                        LocalDateTime ticketDate = ticket.getCreatedAt();
+                        boolean inRange = !ticketDate.isBefore(dayStart) && !ticketDate.isAfter(dayEnd);
+                        if (inRange) {
+                            System.out.println("DEBUG: Ticket " + ticket.getId() + " created on " + ticketDate + " is in range for " + days[dayIndex]);
+                        }
+                        return inRange;
+                    })
+                    .count();
+            
+            System.out.println("DEBUG: " + days[dayIndex] + ": " + ticketsCount + " tickets");
+            
+            weeklyData.add(new Object() {
+                public final String name = days[dayIndex];
+                public final int tickets = ticketsCount;
+            });
+        }
+        
+        System.out.println("DEBUG: Returning weekly data: " + weeklyData.size() + " items");
+        return weeklyData;
+    }
+
+    @Override
     public TicketResponseDTO update(String id, TicketRequestDTO request, String requesterEmail) {
         Ticket ticket = findTicketOrThrow(id);
         if (!ticket.getCreatorEmail().equals(requesterEmail)) {

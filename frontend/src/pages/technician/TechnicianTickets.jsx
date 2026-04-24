@@ -517,12 +517,12 @@ function TechnicianTickets({ tickets, setTickets, searchTerm, loading, fetchTick
   };
 
   const TicketCard = ({ ticket }) => (
-    <div className="bg-white border border-slate-200 rounded-2xl p-6 hover:shadow-lg transition-all duration-300 hover:-translate-y-1">
+    <div className="bg-white border border-slate-200 rounded-2xl p-8 hover:shadow-lg transition-all duration-300 hover:-translate-y-1 min-h-[280px]">
       {/* Header */}
-      <div className="flex items-start justify-between mb-4">
+      <div className="flex items-start justify-between mb-6">
         <div className="flex-1">
-          <h3 className="text-lg font-semibold text-slate-900 mb-2">{ticket.title}</h3>
-          <div className="flex items-center gap-3 text-sm text-slate-600">
+          <h3 className="text-xl font-semibold text-slate-900 mb-3">{ticket.title}</h3>
+          <div className="flex items-center gap-4 text-base text-slate-600">
             <span className="flex items-center gap-1">
               <User size={14} />
               {getCreatorDisplayName(ticket)}
@@ -550,7 +550,7 @@ function TechnicianTickets({ tickets, setTickets, searchTerm, loading, fetchTick
       </div>
 
       {/* Description */}
-      <p className="text-slate-600 text-sm mb-4 line-clamp-2">{ticket.description}</p>
+      <p className="text-slate-600 text-base mb-6 line-clamp-3">{ticket.description}</p>
 
       {/* Status and Actions */}
       <div className="flex items-center justify-between">
@@ -689,7 +689,7 @@ function TechnicianTickets({ tickets, setTickets, searchTerm, loading, fetchTick
       </div>
 
       {/* Tickets Grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-2 gap-8">
         {filteredTickets.map((ticket) => (
           <TicketCard key={ticket.id} ticket={ticket} />
         ))}

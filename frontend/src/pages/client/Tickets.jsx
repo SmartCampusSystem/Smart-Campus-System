@@ -160,7 +160,7 @@ const Tickets = () => {
 
   const fetchTickets = async () => {
     try {
-      const response = await api.get('/tickets');
+      const response = await api.get('/tickets/my');
       setTickets(response.data);
       setLoading(false);
     } catch (err) {

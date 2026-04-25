@@ -1,5 +1,7 @@
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { Toaster } from 'react-hot-toast';
+import ProtectedRoute from './components/ProtectedRoute'; // Import the guard
+
 import AdminDashboard from './pages/admin/AdminDashboard';
 import Login from './pages/auth/LoginPage';
 import Home from './pages/client/Home';
@@ -16,28 +18,54 @@ import ProfilePage from './pages/client/ProfilePage';
 import BookingDetails from './pages/client/BookingsDetails';
 import AdminBookingDetails from './pages/admin/AdminBookingDetails';
 
-
-
 function App() {
   return (
     <BrowserRouter>
       <Toaster position="top-right" />
       <Routes>
-        <Route path="/" element={<Home />} />
+        {/* --- Public Routes --- */}
         <Route path="/login" element={<Login />} />
-        <Route path="/admin/*" element={<AdminDashboard />} />
-        <Route path="/technician/*" element={<TechnicianDashboard />} />
         <Route path="/register" element={<Register />} />
-        <Route path="/resources" element={<Resources />} />
-        <Route path="/book/:id" element={<BookResource />} />
-        <Route path="/my-bookings" element={<MyBookings />} />
-        <Route path="/bookings" element={<BookingsHub />} />
-        <Route path="/support" element={<SupportPage />} />
-        <Route path="/tickets" element={<Tickets />} />
-        <Route path="/notifications" element={<NotificationPage />} />
-        <Route path="/profile" element={<ProfilePage />} />
-        <Route path="/bookings/:id" element={<BookingDetails />} />
-        <Route path="/admin/bookings/:id" element={<AdminBookingDetails />} />
+        <Route path="/" element={<Home />} />
+
+        {/* --- Admin Routes --- */}
+        <Route 
+          path="/admin/*" 
+          element={
+            <ProtectedRoute allowedRole="ADMIN">
+              <AdminDashboard />
+            </ProtectedRoute>
+          } 
+        />
+        <Route 
+          path="/admin/bookings/:id" 
+          element={
+            <ProtectedRoute allowedRole="ADMIN">
+              <AdminBookingDetails />
+            </ProtectedRoute>
+          } 
+        />
+
+        {/* --- Technician Routes --- */}
+        <Route 
+          path="/technician/*" 
+          element={
+            <ProtectedRoute allowedRole="TECHNICIAN">
+              <TechnicianDashboard />
+            </ProtectedRoute>
+          } 
+        />
+
+        {/* --- Client/User Protected Routes --- */}
+        <Route path="/resources" element={<ProtectedRoute><Resources /></ProtectedRoute>} />
+        <Route path="/book/:id" element={<ProtectedRoute><BookResource /></ProtectedRoute>} />
+        <Route path="/my-bookings" element={<ProtectedRoute><MyBookings /></ProtectedRoute>} />
+        <Route path="/bookings" element={<ProtectedRoute><BookingsHub /></ProtectedRoute>} />
+        <Route path="/support" element={<ProtectedRoute><SupportPage /></ProtectedRoute>} />
+        <Route path="/tickets" element={<ProtectedRoute><Tickets /></ProtectedRoute>} />
+        <Route path="/notifications" element={<ProtectedRoute><NotificationPage /></ProtectedRoute>} />
+        <Route path="/profile" element={<ProtectedRoute><ProfilePage /></ProtectedRoute>} />
+        <Route path="/bookings/:id" element={<ProtectedRoute><BookingDetails /></ProtectedRoute>} />
         
       </Routes>
     </BrowserRouter>

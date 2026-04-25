@@ -5,7 +5,7 @@ import {
   ShieldCheck, Sparkles, Bell, ShoppingBag, 
   LogOut, User, Settings, ChevronDown, GraduationCap,
   Clock, CheckCircle2, Trash2, MailOpen, Inbox,
-  XCircle, Clock4, AlertTriangle
+  XCircle, Clock4, AlertTriangle, Ticket, CalendarCheck
 } from 'lucide-react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import axios from 'axios';
@@ -16,6 +16,7 @@ const Navbar = () => {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [userName, setUserName] = useState("Smart User");
   const [userEmail, setUserEmail] = useState("");
+  const [userPicture, setUserPicture] = useState("");
   
   // Notification States
   const [notifications, setNotifications] = useState([]);
@@ -27,36 +28,60 @@ const Navbar = () => {
   const location = useLocation();
 
   const checkLoginStatus = () => {
+    // --- Google Login දත්ත පරීක්ෂා කිරීම ---
+    const urlParams = new URLSearchParams(window.location.search);
+    const googleToken = urlParams.get('token');
+    
+    if (googleToken === 'google-auth') {
+      const userData = {
+        name: urlParams.get('name'),
+        email: urlParams.get('email'),
+        picture: urlParams.get('picture')
+      };
+      
+      localStorage.setItem('token', 'google-session-active');
+      localStorage.setItem('user', JSON.stringify(userData));
+      
+      // URL එක පිරිසිදු කිරීම
+      window.history.replaceState({}, document.title, window.location.pathname);
+      // UI එක වහාම update වීමට event එකක් trigger කිරීම
+      window.dispatchEvent(new Event("authChange"));
+    }
+    // ------------------------------------
+
     const token = localStorage.getItem('token');
     const userJson = localStorage.getItem('user');
-    setIsLoggedIn(!!token);
+    
+    const authenticated = !!token;
+    setIsLoggedIn(authenticated);
 
     if (userJson) {
       try {
         const userData = JSON.parse(userJson);
         setUserName(userData.name || "Smart User");
         setUserEmail(userData.email || "");
+        setUserPicture(userData.picture || "");
       } catch (e) {
+        console.error("JSON parse error", e);
         setUserName("Smart User");
       }
+    } else {
+      setUserName("Smart User");
+      setUserEmail("");
+      setUserPicture("");
     }
   };
 
   const fetchNotifications = async () => {
     if (!userEmail) return;
     try {
-      // 1. Fetch personal notifications
       const personalRes = await axios.get(`http://localhost:8082/api/notifications/user/${userEmail}`);
-      
-      // 2. Fetch broadcast notifications (ALL)
       const broadcastRes = await axios.get(`http://localhost:8082/api/notifications/user/ALL`);
       
-      // Merge and Sort by Date
       const combined = [...personalRes.data, ...broadcastRes.data].sort(
         (a, b) => new Date(b.createdAt) - new Date(a.createdAt)
       );
 
-      // 3. Get counts for both (or just filter unread from combined)
       const unread = combined.filter(n => !n.read).length;
 
       setNotifications(combined);
@@ -77,11 +102,8 @@ const Navbar = () => {
 
   const markAllAsRead = async () => {
     try {
-      // Mark personal ones as read
       await axios.put(`http://localhost:8082/api/notifications/user/${userEmail}/read-all`);
-      // Mark "ALL" ones as read (if your backend supports it)
       await axios.put(`http://localhost:8082/api/notifications/user/ALL/read-all`);
-      
       fetchNotifications();
     } catch (error) {
       console.error("Error marking all as read", error);
@@ -99,26 +121,28 @@ const Navbar = () => {
     }
   };
 
-  // Status Icons Helper
-  const getStatusIcon = (status) => {
-    switch (status) {
-      case 'APPROVED': 
-        return <CheckCircle2 size={22} className="text-emerald-400" />;
-      case 'REJECTED': 
-        return <XCircle size={22} className="text-rose-400" />;
-      case 'PENDING': 
-        return <Clock4 size={22} className="text-amber-400" />;
-      case 'CANCELLED': 
-        return <Trash2 size={22} className="text-gray-400" />;
-      case 'MAINTENANCE':
-        return <AlertTriangle size={22} className="text-amber-500" />;
-      default: 
-        return <GraduationCap size={22} className="text-[#ebc070]" />;
-    }
+  const getStatusIcon = (notif) => {
+    const status = notif.status;
+    const type = notif.type;
+
+    // Status අනුව පෙන්වන Icons (Booking/Ticket දෙකටම පොදුයි)
+    if (status === 'APPROVED') return <CheckCircle2 size={22} className="text-emerald-400" />;
+    if (status === 'REJECTED') return <XCircle size={22} className="text-rose-400" />;
+    if (status === 'PENDING') return <Clock4 size={22} className="text-amber-400" />;
+    if (status === 'CANCELLED') return <Trash2 size={22} className="text-gray-400" />;
+    if (status === 'MAINTENANCE') return <AlertTriangle size={22} className="text-amber-500" />;
+
+    // Status එකක් නැතිනම් Type එක අනුව Icons
+    if (type === 'TICKET') return <Ticket size={22} className="text-[#ebc070]" />;
+    if (type === 'BOOKING') return <CalendarCheck size={22} className="text-[#ebc070]" />;
+
+    return <GraduationCap size={22} className="text-[#ebc070]" />;
   };
 
   useEffect(() => {
     checkLoginStatus();
+    
+    // Listeners for login/logout updates
     window.addEventListener('storage', checkLoginStatus);
     window.addEventListener('authChange', checkLoginStatus);
 
@@ -137,7 +161,7 @@ const Navbar = () => {
       window.removeEventListener('authChange', checkLoginStatus);
       document.removeEventListener('mousedown', handleClickOutside);
     };
-  }, [location, userEmail]);
+  }, [location.pathname, userEmail]); // Updated dependency to pathname
 
   useEffect(() => {
     if (isLoggedIn && userEmail) {
@@ -151,6 +175,9 @@ const Navbar = () => {
     localStorage.removeItem('token');
     localStorage.removeItem('user');
     setIsLoggedIn(false);
+    setUserName("Smart User");
+    setUserEmail("");
+    setUserPicture("");
     setShowProfileMenu(false);
     window.dispatchEvent(new Event("authChange")); 
     navigate('/login');
@@ -238,7 +265,6 @@ const Navbar = () => {
 
                   {showNotifications && (
                     <div className="absolute right-0 mt-5 w-[420px] bg-[#0a4242]/95 backdrop-blur-2xl border border-white/10 rounded-[32px] shadow-[0_20px_50px_rgba(0,0,0,0.5)] overflow-hidden z-[110] animate-in fade-in zoom-in-95 duration-300">
-                      {/* Header */}
                       <div className="p-6 bg-gradient-to-b from-white/10 to-transparent flex items-center justify-between">
                         <div>
                           <h3 className="text-white font-black text-lg tracking-tight">Activities</h3>
@@ -262,7 +288,6 @@ const Navbar = () => {
                         </div>
                       </div>
 
-                      {/* Content */}
                       <div className="max-h-[450px] overflow-y-auto custom-scrollbar px-3 pb-3">
                         {notifications.length > 0 ? (
                           <div className="grid gap-2">
@@ -284,7 +309,7 @@ const Navbar = () => {
                                     notif.status === 'CANCELLED' ? 'bg-gray-500/20' :
                                     'bg-[#ebc070]/20'
                                   }`}>
-                                    {getStatusIcon(notif.status || notif.type)}
+                                    {getStatusIcon(notif)}
                                   </div>
                                   
                                   <div className="flex flex-col justify-center flex-1 min-w-0">
@@ -336,7 +361,6 @@ const Navbar = () => {
                         )}
                       </div>
 
-                      {/* Footer */}
                       <Link 
                         to="/notifications" 
                         onClick={() => setShowNotifications(false)}
@@ -348,7 +372,6 @@ const Navbar = () => {
                     </div>
                   )}
                 </div>
-                {/* --- END MODERN NOTIFICATION SECTION --- */}
 
                 <Link to="/my-bookings" className="w-12 h-12 flex items-center justify-center rounded-2xl bg-white/5 text-white/70 hover:text-[#ebc070] border border-white/10 transition-all group">
                   <ShoppingBag size={20} />
@@ -359,8 +382,12 @@ const Navbar = () => {
                     onClick={() => setShowProfileMenu(!showProfileMenu)}
                     className="flex items-center gap-3 p-1.5 pr-5 bg-white/5 rounded-[22px] border border-white/10 hover:bg-white/10 transition-all active:scale-95 group"
                   >
-                    <div className="w-10 h-10 bg-gradient-to-tr from-[#ebc070] to-[#f3d393] rounded-[16px] flex items-center justify-center text-[#0c5252] shadow-lg font-black text-lg">
-                        {userName.charAt(0).toUpperCase()}
+                    <div className="w-10 h-10 rounded-[16px] overflow-hidden flex items-center justify-center bg-gradient-to-tr from-[#ebc070] to-[#f3d393] text-[#0c5252] shadow-lg font-black text-lg">
+                        {userPicture ? (
+                          <img src={userPicture} alt="profile" className="w-full h-full object-cover" />
+                        ) : (
+                          userName.charAt(0).toUpperCase()
+                        )}
                     </div>
                     <div className="flex flex-col items-start hidden sm:flex text-left">
                         <span className="text-[10px] text-white/40 font-black uppercase tracking-tighter leading-none">Verified User</span>
@@ -374,8 +401,12 @@ const Navbar = () => {
                   {showProfileMenu && (
                     <div className="absolute right-0 mt-4 w-72 bg-[#0c5252] border border-white/10 rounded-[25px] shadow-2xl p-3 backdrop-blur-3xl z-[110]">
                       <div className="px-6 py-4 mb-2 bg-white/5 rounded-[20px] border border-white/5 flex items-center gap-4">
-                        <div className="w-10 h-10 bg-[#ebc070] rounded-xl flex items-center justify-center text-[#0c5252] font-black text-lg">
-                              {userName.charAt(0).toUpperCase()}
+                        <div className="w-10 h-10 rounded-xl overflow-hidden flex items-center justify-center bg-[#ebc070] text-[#0c5252] font-black text-lg">
+                              {userPicture ? (
+                                <img src={userPicture} alt="profile" className="w-full h-full object-cover" />
+                              ) : (
+                                userName.charAt(0).toUpperCase()
+                              )}
                         </div>
                         <div className="overflow-hidden">
                             <p className="text-[9px] text-[#ebc070] font-black uppercase tracking-[0.2em] mb-0.5">Active</p>

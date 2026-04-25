@@ -9,22 +9,21 @@ public class Notification {
     @Id
     private String id;
 
-    // Local login එකේ email එක හෝ OAuth එකෙන් එන email එක මෙතනට දාන්න
-    // Admin ට එන ඒවාට "ADMIN" ලෙසද, සැමට යන ඒවාට "ALL" ලෙසද යොදන්න.
+    
     private String recipientEmail; 
     
-    private String senderEmail;     // පණිවිඩය යවන පුද්ගලයා (e.g. Admin's email) - අලුතින් එක් කළ කොටස
+    private String senderEmail;     
     
-    private String message;         // පණිවිඩය (e.g. Your booking is approved)
-    private String type;            // BOOKING, TICKET, COMMENT හෝ BROADCAST
-    private String referenceId;     // Booking ID හෝ Ticket ID (Object ID එක)
+    private String message;       
+    private String type;           
+    private String referenceId;    
     private boolean isRead;
     private LocalDateTime createdAt;
 
-    // Default Constructor
+   
     public Notification() {}
 
-    // පවතින Constructor එක (මෙය වෙනස් කර නැත - පැරණි UI/Logic බිඳ නොවැටේ)
+   
     public Notification(String recipientEmail, String message, String type, String referenceId) {
         this.recipientEmail = recipientEmail;
         this.message = message;
@@ -34,10 +33,10 @@ public class Notification {
         this.createdAt = LocalDateTime.now();
     }
 
-    // Admin සඳහා අලුතින් එක් කළ Constructor එක (Overloaded)
+    
     public Notification(String recipientEmail, String senderEmail, String message, String type, String referenceId) {
         this.recipientEmail = recipientEmail;
-        this.senderEmail = senderEmail; // අලුත් field එක
+        this.senderEmail = senderEmail; 
         this.message = message;
         this.type = type;
         this.referenceId = referenceId;

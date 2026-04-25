@@ -81,7 +81,7 @@ public class UserServiceImpl implements UserService {
         return mapToDTO(userRepository.save(user));
     }
 
-    // Long id වෙනුවට String id භාවිතා කරන ලදී
+  
     @Override
     public UserDTO getUserById(String id) {
         User user = userRepository.findById(id)
@@ -103,7 +103,7 @@ public class UserServiceImpl implements UserService {
                 .collect(Collectors.toList());
     }
 
-    // Long id වෙනුවට String id භාවිතා කරන ලදී
+   
     @Override
     public UserDTO updateUserRole(String id, String role) {
         User user = userRepository.findById(id)
@@ -112,7 +112,7 @@ public class UserServiceImpl implements UserService {
         return mapToDTO(userRepository.save(user));
     }
 
-    // Long id වෙනුවට String id භාවිතා කරන ලදී
+   
     @Override
     public void deleteUser(String id) {
         userRepository.deleteById(id);
@@ -120,7 +120,7 @@ public class UserServiceImpl implements UserService {
 
     private UserDTO mapToDTO(User user) {
         UserDTO dto = new UserDTO();
-        dto.setId(user.getId()); // මෙහි user.getId() දැන් ලබා දෙන්නේ String එකකි
+        dto.setId(user.getId()); 
         dto.setName(user.getName());
         dto.setEmail(user.getEmail());
         dto.setPicture(user.getPicture());

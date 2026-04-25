@@ -7,30 +7,30 @@ import org.springframework.data.mongodb.core.mapping.Document;
 import org.springframework.data.annotation.CreatedDate;
 import java.time.LocalDateTime;
 
-@Document(collection = "users") // MySQL වල @Table වෙනුවට
+@Document(collection = "users") 
 @Getter @Setter
 @NoArgsConstructor
 @AllArgsConstructor
 public class User {
 
-    @Id // MongoDB වල ID එක සාමාන්‍යයෙන් String එකක් (ObjectId) ලෙස තබා ගැනීම වඩාත් සුදුසුයි
+    @Id 
     private String id;
 
     private String name;
 
-    @Indexed(unique = true) // MySQL වල unique = true වෙනුවට
+    @Indexed(unique = true) 
     private String email;
 
-    private String password; // Google users ලට password එකක් නැති නිසා මෙය nullable විය හැකියි
+    private String password; 
 
     private String picture;
 
     private Role role; // ADMIN, USER, TECHNICIAN
 
-    private String provider; // LOCAL හෝ GOOGLE
+    private String provider; 
 
-    private String providerId; // Google 'sub' ID එක
+    private String providerId; 
 
-    @CreatedDate // Hibernate @CreationTimestamp වෙනුවට Spring Data MongoDB Annotation එක
+    @CreatedDate 
     private LocalDateTime createdAt; 
 }

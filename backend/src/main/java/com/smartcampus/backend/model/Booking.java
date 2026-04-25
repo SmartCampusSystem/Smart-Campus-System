@@ -16,18 +16,17 @@ public class Booking {
     @Id
     private String id;
     
-    private String resourceId;  // Module A හි සම්පතේ ID එක [cite: 52]
-    private String userEmail;   // වෙන් කිරීම සිදු කරන පරිශීලකයා [cite: 56]
+    private String resourceId;  
+    private String userEmail;   
     
-    private LocalDateTime startTime; // ආරම්භක වේලාව [cite: 56]
-    private LocalDateTime endTime;   // අවසාන වේලාව [cite: 56]
+    private LocalDateTime startTime; 
+    private LocalDateTime endTime;   
     
-    private String purpose;      // වෙන් කිරීමේ අරමුණ [cite: 56]
-    private Integer expectedAttendees; // සහභාගී වන්නන් ගණන [cite: 56]
+    private String purpose;     
+    private Integer expectedAttendees; 
     
-    private BookingStatus status; // Workflow: PENDING -> APPROVED/REJECTED 
-    private String rejectionReason; // Reject කිරීමට හේතුව [cite: 64]
-
+    private BookingStatus status; 
+    private String rejectionReason; 
     public enum BookingStatus {
         PENDING, APPROVED, REJECTED, CANCELLED
     }

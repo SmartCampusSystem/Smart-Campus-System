@@ -39,10 +39,10 @@ public class ResourceServiceImpl implements ResourceService {
 
     @Override
     public Resource updateResource(String id, Resource resourceDetails) {
-        // 1. පවතින Resource එක ලබා ගැනීම
+       
         Resource resource = getResourceById(id);
         
-        // 2. සියලුම Fields යාවත්කාලීන කිරීම (Update all relevant fields)
+      
         resource.setName(resourceDetails.getName());
         resource.setType(resourceDetails.getType());
         resource.setCapacity(resourceDetails.getCapacity());
@@ -50,14 +50,14 @@ public class ResourceServiceImpl implements ResourceService {
         resource.setAvailabilityWindows(resourceDetails.getAvailabilityWindows());
         resource.setStatus(resourceDetails.getStatus());
         
-        // සටහන: createdBy වෙනස් නොකර තබා ගැනීම නිර්දේශ කෙරේ (Auditability සඳහා)
+      
 
         return resourceRepository.save(resource);
     }
 
     @Override
     public void deleteResource(String id) {
-        // මකා දැමීමට පෙර පවතීදැයි පරීක්ෂා කිරීම වඩාත් සුදුසුයි
+ 
         if (!resourceRepository.existsById(id)) {
             throw new RuntimeException("Cannot delete. Resource not found with id: " + id);
         }

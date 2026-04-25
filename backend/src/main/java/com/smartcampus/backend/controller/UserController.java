@@ -19,9 +19,7 @@ public class UserController {
     @Autowired
     private UserService userService;
 
-    /**
-     * 1. GET /me - දැනට ලොග් වී සිටින පරිශීලකයා ලබා ගැනීම
-     */
+    
     @GetMapping("/me")
     public ResponseEntity<UserDTO> getCurrentUser(Authentication authentication) {
         if (authentication == null) {
@@ -44,9 +42,7 @@ public class UserController {
         }
     }
 
-    /**
-     * GET /by-email?email=...
-     */
+  
     @GetMapping("/by-email")
     public ResponseEntity<UserDTO> getUserByEmail(@RequestParam("email") String email) {
         try {
@@ -57,26 +53,26 @@ public class UserController {
         }
     }
 
-    // 2. GET - සියලුම පරිශීලකයන් ලබා ගැනීම
+
     @GetMapping
     public List<UserDTO> getAllUsers() {
         return userService.getAllUsers();
     }
 
-    // 3. GET - ID එක මගින් සෙවීම (Long id -> String id ලෙස වෙනස් කරන ලදී)
+    
     @GetMapping("/{id}")
     public ResponseEntity<UserDTO> getUserById(@PathVariable String id) {
         return ResponseEntity.ok(userService.getUserById(id));
     }
 
-    // 4. PUT - User Role වෙනස් කිරීම (Long id -> String id ලෙස වෙනස් කරන ලදී)
+   
     @PutMapping("/{id}/role")
     public ResponseEntity<UserDTO> updateRole(@PathVariable String id, @RequestBody String role) {
         String cleanRole = role.replace("\"", "").trim(); 
         return ResponseEntity.ok(userService.updateUserRole(id, cleanRole));
     }
 
-    // 5. DELETE - පරිශීලකයෙකු ඉවත් කිරීම (Long id -> String id ලෙස වෙනස් කරන ලදී)
+
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deleteUser(@PathVariable String id) {
         userService.deleteUser(id);

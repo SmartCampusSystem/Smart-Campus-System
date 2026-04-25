@@ -18,36 +18,36 @@ public class BookingController {
     @Autowired
     private BookingService bookingService;
 
-    // 1. අලුත් Booking එකක් සිදු කිරීම (නිවැරදි කළා)
+  
     @PostMapping
     public ResponseEntity<?> createBooking(@RequestBody Booking booking, Principal principal) {
         if (principal == null) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Login required to book");
         }
         booking.setUserEmail(principal.getName());
-        booking.setStatus(Booking.BookingStatus.PENDING); // Default status එක set කිරීම
+        booking.setStatus(Booking.BookingStatus.PENDING); 
         return ResponseEntity.ok(bookingService.createBooking(booking));
     }
 
-    // 2. තමාගේ වෙන් කිරීම් පමණක් බැලීම (මෙහි තමයි කලින් වැරැද්ද තිබුණේ)
+   
     @GetMapping("/my")
     public ResponseEntity<?> getMyBookings(Principal principal) {
-        // Principal null නම් HTML එකක් වෙනුවට JSON එකක් ලෙස 401 code එක ලබා දීම
+       
         if (principal == null) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Session expired. Please login again.");
         }
         
         List<Booking> myBookings = bookingService.getMyBookings(principal.getName());
-        return ResponseEntity.ok(myBookings); // React එකට Array එකක්ම ලැබෙන බව තහවුරු කරයි
+        return ResponseEntity.ok(myBookings); 
     }
 
-    // 3. සියලුම වෙන් කිරීම් බැලීම (Admin පමණි)
+   
     @GetMapping("/all")
     public ResponseEntity<List<Booking>> getAllBookings() {
         return ResponseEntity.ok(bookingService.getAllBookings());
     }
 
-    // 6. ID එක මගින් තනි Booking එකක විස්තර ලබා ගැනීම
+   
 @GetMapping("/{id}")
 public ResponseEntity<?> getBookingById(@PathVariable String id, Principal principal) {
     if (principal == null) {
@@ -56,15 +56,12 @@ public ResponseEntity<?> getBookingById(@PathVariable String id, Principal princ
     
     Booking booking = bookingService.getBookingById(id);
     
-    // ආරක්ෂාව සඳහා: බුකින් එක අයිති පුද්ගලයා හෝ Admin කෙනෙක් පමණක් දත්ත දැකිය යුතුයි නම්:
     // if (!booking.getUserEmail().equals(principal.getName())) {
     //     return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
     // }
 
     return ResponseEntity.ok(booking);
 }
-
-    // 4. Status වෙනස් කිරීම සහ 5. Cancel කිරීම ඔබ එවූ පරිදිම පවතී...
     @PutMapping("/{id}/status")
     public ResponseEntity<Booking> updateStatus(
             @PathVariable String id,

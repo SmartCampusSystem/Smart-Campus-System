@@ -8,6 +8,7 @@ import com.smartcampus.backend.model.Ticket.TicketStatus;
 import com.smartcampus.backend.repository.TicketRepository;
 import com.smartcampus.backend.service.FileStorageService;
 import com.smartcampus.backend.service.TicketService;
+import com.smartcampus.backend.service.NotificationService; 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
@@ -28,6 +29,9 @@ public class TicketServiceImpl implements TicketService {
     @Autowired
     private FileStorageService fileStorageService;
 
+    @Autowired
+    private NotificationService notificationService; 
+
     private static final int MAX_ATTACHMENTS = 3;
 
     // ═══════════════════════════════════════════════════════════
@@ -43,7 +47,6 @@ public class TicketServiceImpl implements TicketService {
         ticket.setPriority(request.getPriority());
         ticket.setResourceId(request.getResourceId());
         
-        // Structured Location Fields
         ticket.setBuildingName(request.getBuildingName());
         ticket.setFloor(request.getFloor());
         ticket.setBlock(request.getBlock());
@@ -57,7 +60,12 @@ public class TicketServiceImpl implements TicketService {
         ticket.setCreatedAt(LocalDateTime.now());
         ticket.setComments(new ArrayList<>());
         ticket.setAttachments(new ArrayList<>());
-        return mapToDTO(ticketRepository.save(ticket));
+        
+        Ticket savedTicket = ticketRepository.save(ticket);
+
+        // Admin notifications (ALL) ඉවත් කරන ලදී.
+
+        return mapToDTO(savedTicket);
     }
 
     @Override
@@ -96,23 +104,12 @@ public class TicketServiceImpl implements TicketService {
 
     @Override
     public List<Object> getWeeklyDataByTechnician(String technicianEmail) {
-        System.out.println("DEBUG: Getting weekly data for technician: " + technicianEmail);
-        
         List<Ticket> technicianTickets = ticketRepository.findByAssignedTechnician(technicianEmail);
-        System.out.println("DEBUG: Found " + technicianTickets.size() + " tickets assigned to technician");
-        
-        // Get current week data - fix the day calculation
         LocalDateTime now = LocalDateTime.now();
         java.time.DayOfWeek currentDay = now.getDayOfWeek();
-        System.out.println("DEBUG: Current day of week: " + currentDay + " (value: " + currentDay.getValue() + ")");
-        
-        // Java DayOfWeek: Monday=1, Tuesday=2, ..., Sunday=7
-        // Calculate Monday of current week
-        int daysFromMonday = currentDay.getValue() - 1; // Monday = 0, Tuesday = 1, etc.
+        int daysFromMonday = currentDay.getValue() - 1; 
         LocalDateTime weekStart = now.minusDays(daysFromMonday).withHour(0).withMinute(0).withSecond(0).withNano(0);
-        System.out.println("DEBUG: Current week start (Monday): " + weekStart);
         
-        // Initialize weekly data
         List<Object> weeklyData = new ArrayList<>();
         String[] days = {"Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"};
         
@@ -121,29 +118,18 @@ public class TicketServiceImpl implements TicketService {
             LocalDateTime dayStart = weekStart.plusDays(i);
             LocalDateTime dayEnd = dayStart.plusDays(1).minusSeconds(1);
             
-            System.out.println("DEBUG: Processing " + days[dayIndex] + " from " + dayStart + " to " + dayEnd);
-            
-            // Count tickets created on this day
             int ticketsCount = (int) technicianTickets.stream()
                     .filter(ticket -> {
                         LocalDateTime ticketDate = ticket.getCreatedAt();
-                        boolean inRange = !ticketDate.isBefore(dayStart) && !ticketDate.isAfter(dayEnd);
-                        if (inRange) {
-                            System.out.println("DEBUG: Ticket " + ticket.getId() + " created on " + ticketDate + " is in range for " + days[dayIndex]);
-                        }
-                        return inRange;
+                        return !ticketDate.isBefore(dayStart) && !ticketDate.isAfter(dayEnd);
                     })
                     .count();
-            
-            System.out.println("DEBUG: " + days[dayIndex] + ": " + ticketsCount + " tickets");
             
             weeklyData.add(new Object() {
                 public final String name = days[dayIndex];
                 public final int tickets = ticketsCount;
             });
         }
-        
-        System.out.println("DEBUG: Returning weekly data: " + weeklyData.size() + " items");
         return weeklyData;
     }
 
@@ -162,7 +148,6 @@ public class TicketServiceImpl implements TicketService {
         ticket.setPriority(request.getPriority());
         ticket.setResourceId(request.getResourceId());
         
-        // Structured Location Fields
         ticket.setBuildingName(request.getBuildingName());
         ticket.setFloor(request.getFloor());
         ticket.setBlock(request.getBlock());
@@ -205,7 +190,17 @@ public class TicketServiceImpl implements TicketService {
         }
         ticket.setStatus(dto.getStatus());
         ticket.setUpdatedAt(LocalDateTime.now());
-        return mapToDTO(ticketRepository.save(ticket));
+        Ticket savedTicket = ticketRepository.save(ticket);
+
+        // ටිකට් එක දාපු කෙනාගේ (Creator) Email එකට පමණක් Notification එක යවයි
+        notificationService.createNotification(
+            savedTicket.getCreatorEmail(), 
+            "Your ticket '" + savedTicket.getTitle() + "' status updated to " + dto.getStatus(), 
+            "TICKET", 
+            savedTicket.getId()
+        );
+
+        return mapToDTO(savedTicket);
     }
 
     @Override
@@ -216,7 +211,17 @@ public class TicketServiceImpl implements TicketService {
         ticket.setAssignedTechnician(technicianEmail);
         if (ticket.getStatus() == TicketStatus.OPEN) ticket.setStatus(TicketStatus.IN_PROGRESS);
         ticket.setUpdatedAt(LocalDateTime.now());
-        return mapToDTO(ticketRepository.save(ticket));
+        Ticket savedTicket = ticketRepository.save(ticket);
+
+        // ටිකට් එක දාපු කෙනාගේ (Creator) Email එකට පමණක් Notification එක යවයි
+        notificationService.createNotification(
+            savedTicket.getCreatorEmail(), 
+            "A technician has been assigned to your ticket: " + savedTicket.getTitle(), 
+            "TICKET", 
+            savedTicket.getId()
+        );
+
+        return mapToDTO(savedTicket);
     }
 
     // ═══════════════════════════════════════════════════════════
@@ -230,8 +235,6 @@ public class TicketServiceImpl implements TicketService {
         int current = ticket.getAttachments().size();
         if (current >= MAX_ATTACHMENTS)
             throw new RuntimeException("Maximum of " + MAX_ATTACHMENTS + " attachments allowed per ticket.");
-        if (files.length + current > MAX_ATTACHMENTS)
-            throw new RuntimeException("Adding " + files.length + " file(s) would exceed the limit of " + MAX_ATTACHMENTS + ".");
         for (MultipartFile file : files) {
             try {
                 ticket.getAttachments().add(fileStorageService.store(file));
@@ -315,7 +318,7 @@ public class TicketServiceImpl implements TicketService {
 
     private void validateTransition(TicketStatus current, TicketStatus next) {
         boolean valid = switch (current) {
-            case OPEN        -> next == TicketStatus.IN_PROGRESS || next == TicketStatus.REJECTED;
+            case OPEN         -> next == TicketStatus.IN_PROGRESS || next == TicketStatus.REJECTED;
             case IN_PROGRESS -> next == TicketStatus.RESOLVED    || next == TicketStatus.REJECTED;
             case RESOLVED    -> next == TicketStatus.CLOSED;
             case CLOSED, REJECTED -> false;
@@ -333,7 +336,6 @@ public class TicketServiceImpl implements TicketService {
         dto.setStatus(ticket.getStatus());
         dto.setResourceId(ticket.getResourceId());
         
-        // Structured Location Fields
         dto.setBuildingName(ticket.getBuildingName());
         dto.setFloor(ticket.getFloor());
         dto.setBlock(ticket.getBlock());

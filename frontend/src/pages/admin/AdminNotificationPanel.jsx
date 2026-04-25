@@ -6,11 +6,12 @@ import {
   AlertCircle, History, Inbox, Trash2, CheckCircle,
   Edit3, MoreVertical, Search, Filter, Sparkles,
   ArrowRight, ShieldCheck, Megaphone, RefreshCw,
-  Activity, Users, Zap, Calendar
+  Activity, Users, Zap, Calendar, Ticket, BookmarkCheck
 } from 'lucide-react';
 
 const AdminNotificationPanel = () => {
   const [activeTab, setActiveTab] = useState('send');
+  const [alertCategory, setAlertCategory] = useState('BOOKING'); // New state for alert filtering
   const [isEditing, setIsEditing] = useState(null);
 
   const [notification, setNotification] = useState({
@@ -39,7 +40,6 @@ const AdminNotificationPanel = () => {
 
   const fetchAlerts = async () => {
     try {
-      // Backend එකේ අපි හදපු නව Endpoint එක call කිරීම
       const res = await fetch('http://localhost:8082/api/notifications/admin/alerts');
       const data = await res.json();
       setAlerts(data);
@@ -79,7 +79,6 @@ const AdminNotificationPanel = () => {
         });
         if (response.ok) {
           setHistory(history.filter(log => log.id !== id));
-          // Alerts වල තිබී මැකුවා නම් ඒවාත් update වීමට:
           setAlerts(alerts.filter(alert => alert.id !== id));
         }
       } catch (err) {
@@ -110,6 +109,13 @@ const AdminNotificationPanel = () => {
       senderEmail: 'admin@smartcampus.com',
     });
   };
+
+  // Filter alerts based on sub-category
+  const filteredAlerts = alerts.filter(alert => {
+    if (alertCategory === 'BOOKING') return alert.message.toLowerCase().includes('booking');
+    if (alertCategory === 'TICKET') return alert.message.toLowerCase().includes('ticket');
+    return true;
+  });
 
   return (
     <div className="max-w-7xl mx-auto p-6 font-sans text-[#1E293B] bg-[#F8FAFC]/50 min-h-screen">
@@ -151,7 +157,6 @@ const AdminNotificationPanel = () => {
       {/* --- MAIN CONTENT AREA --- */}
       <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
         
-        {/* Left Section (Forms/Lists) - Occupies 3 columns */}
         <div className="lg:col-span-3">
           
           {/* SEND / EDIT FORM */}
@@ -227,32 +232,52 @@ const AdminNotificationPanel = () => {
             </div>
           )}
 
-          {/* ALERTS SECTION */}
+          {/* ALERTS SECTION WITH CATEGORIES */}
           {activeTab === 'requests' && (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 animate-in fade-in slide-in-from-bottom-6">
-              {alerts.length === 0 ? (
-                <div className="col-span-full bg-white p-20 rounded-[45px] text-center border border-white">
-                  <Inbox size={40} className="text-gray-200 mx-auto mb-4" />
-                  <h3 className="text-[#0c5252] font-black uppercase text-xs tracking-widest">No Alerts</h3>
-                </div>
-              ) : (
-                alerts.map((item) => (
-                  <div key={item.id} className="bg-white p-8 rounded-[40px] shadow-sm border border-white hover:border-[#ebc070]/50 transition-all group">
-                    <div className="flex justify-between items-start mb-6">
-                      <div className="w-12 h-12 bg-rose-50 text-rose-500 rounded-2xl flex items-center justify-center"><AlertCircle size={22} /></div>
-                      <span className="text-[8px] font-black bg-gray-100 px-3 py-1 rounded-full uppercase tracking-widest text-gray-500">Pending</span>
-                    </div>
-                    <h4 className="text-[10px] font-black text-[#0c5252] uppercase tracking-widest mb-2">{item.type}</h4>
-                    <p className="text-sm font-bold text-gray-600 leading-relaxed mb-8">{item.message}</p>
-                    <button 
-                      onClick={() => handleDelete(item.id)} // Resolve කළ විට notification එක අයින් කිරීමට delete function එක call කරයි
-                      className="w-full py-4 bg-gray-900 text-white rounded-[18px] font-black text-[10px] uppercase tracking-widest flex items-center justify-center gap-2 hover:bg-[#0c5252] transition-all"
-                    >
-                      <CheckCircle size={14} /> Resolve Request
-                    </button>
+            <div className="space-y-6 animate-in fade-in slide-in-from-bottom-6">
+              {/* Alert Category Switcher */}
+              <div className="flex gap-4 mb-8">
+                <button 
+                  onClick={() => setAlertCategory('BOOKING')}
+                  className={`flex-1 py-4 rounded-2xl font-black text-[10px] uppercase tracking-widest flex items-center justify-center gap-3 transition-all border ${alertCategory === 'BOOKING' ? 'bg-white border-[#ebc070] text-[#0c5252] shadow-sm' : 'bg-transparent border-gray-200 text-gray-400'}`}
+                >
+                  <BookmarkCheck size={16} /> Bookings
+                </button>
+                <button 
+                  onClick={() => setAlertCategory('TICKET')}
+                  className={`flex-1 py-4 rounded-2xl font-black text-[10px] uppercase tracking-widest flex items-center justify-center gap-3 transition-all border ${alertCategory === 'TICKET' ? 'bg-white border-[#ebc070] text-[#0c5252] shadow-sm' : 'bg-transparent border-gray-200 text-gray-400'}`}
+                >
+                  <Ticket size={16} /> Tickets
+                </button>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {filteredAlerts.length === 0 ? (
+                  <div className="col-span-full bg-white p-20 rounded-[45px] text-center border border-white">
+                    <Inbox size={40} className="text-gray-200 mx-auto mb-4" />
+                    <h3 className="text-[#0c5252] font-black uppercase text-xs tracking-widest">No {alertCategory} Alerts</h3>
                   </div>
-                ))
-              )}
+                ) : (
+                  filteredAlerts.map((item) => (
+                    <div key={item.id} className="bg-white p-8 rounded-[40px] shadow-sm border border-white hover:border-[#ebc070]/50 transition-all group">
+                      <div className="flex justify-between items-start mb-6">
+                        <div className={`w-12 h-12 rounded-2xl flex items-center justify-center ${alertCategory === 'BOOKING' ? 'bg-blue-50 text-blue-500' : 'bg-rose-50 text-rose-500'}`}>
+                          {alertCategory === 'BOOKING' ? <BookmarkCheck size={22} /> : <AlertCircle size={22} />}
+                        </div>
+                        <span className="text-[8px] font-black bg-gray-100 px-3 py-1 rounded-full uppercase tracking-widest text-gray-500">New Alert</span>
+                      </div>
+                      <h4 className="text-[10px] font-black text-[#0c5252] uppercase tracking-widest mb-2">{item.type}</h4>
+                      <p className="text-sm font-bold text-gray-600 leading-relaxed mb-8">{item.message}</p>
+                      <button 
+                        onClick={() => handleDelete(item.id)} 
+                        className="w-full py-4 bg-gray-900 text-white rounded-[18px] font-black text-[10px] uppercase tracking-widest flex items-center justify-center gap-2 hover:bg-[#0c5252] transition-all"
+                      >
+                        <CheckCircle size={14} /> Mark as Resolved
+                      </button>
+                    </div>
+                  ))
+                )}
+              </div>
             </div>
           )}
 
@@ -308,10 +333,8 @@ const AdminNotificationPanel = () => {
           )}
         </div>
 
-        {/* Right Section (Sidebar Cards) - Occupies 1 column */}
+        {/* Sidebar Cards */}
         <div className="space-y-6">
-          
-          {/* Main Status Card */}
           <div className="bg-[#ebc070] rounded-[45px] p-8 text-white relative overflow-hidden group shadow-xl shadow-[#ebc070]/20">
             <Sparkles size={100} className="absolute -right-8 -top-8 opacity-20 group-hover:scale-125 transition-transform duration-700" />
             <h3 className="text-2xl font-black leading-tight mb-4 relative z-10">
@@ -325,7 +348,6 @@ const AdminNotificationPanel = () => {
             </p>
           </div>
 
-          {/* Analytics Overview Card */}
           <div className="bg-white rounded-[40px] p-8 border border-white shadow-sm">
             <div className="flex items-center justify-between mb-6">
               <h4 className="text-[10px] font-black text-[#0c5252] uppercase tracking-widest">Quick Stats</h4>
@@ -337,7 +359,7 @@ const AdminNotificationPanel = () => {
                 <span className="text-sm font-black text-[#0c5252]">{history.length}</span>
               </div>
               <div className="flex items-center justify-between">
-                <span className="text-[11px] font-bold text-gray-400">Alerts</span>
+                <span className="text-[11px] font-bold text-gray-400">Total Alerts</span>
                 <span className="text-sm font-black text-rose-500">{alerts.length}</span>
               </div>
               <div className="pt-4 border-t border-gray-50">
@@ -349,7 +371,6 @@ const AdminNotificationPanel = () => {
             </div>
           </div>
 
-          {/* Quick Shortcuts Card */}
           <div className="bg-[#0c5252] rounded-[40px] p-8 text-white relative overflow-hidden group">
             <h4 className="text-[10px] font-black text-[#ebc070] uppercase tracking-widest mb-6">Admin Tools</h4>
             <div className="space-y-4 relative z-10">
@@ -371,14 +392,12 @@ const AdminNotificationPanel = () => {
             <ShieldCheck size={100} className="absolute -right-8 -bottom-8 opacity-5" />
           </div>
 
-          {/* Support/Info Card */}
           <div className="p-8 border-2 border-dashed border-gray-200 rounded-[40px] text-center">
             <Zap size={24} className="text-gray-300 mx-auto mb-3" />
             <p className="text-[10px] font-bold text-gray-400 leading-relaxed">
               Need help? Contact the <br/> <span className="text-[#0c5252]">IT Operations Team</span>
             </p>
           </div>
-
         </div>
       </div>
     </div>

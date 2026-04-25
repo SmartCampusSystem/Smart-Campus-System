@@ -9,7 +9,7 @@ import java.time.LocalDateTime;
 @NoArgsConstructor
 @AllArgsConstructor
 public class UserDTO {
-    private String id;        // Long ඉඳන් String වලට මාරු කළා (MongoDB ID එකට ගැලපෙන්න)
+    private String id;       
     private String name;
     private String email;
     private String picture;

@@ -22,6 +22,8 @@ import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.HttpMethod;
 
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 
 @Configuration
@@ -72,18 +74,13 @@ public class WebSecurityConfig {
             )
 
             .exceptionHandling(exception -> exception
-
                 .authenticationEntryPoint(new HttpStatusEntryPoint(HttpStatus.UNAUTHORIZED))
             )
 
             .authorizeHttpRequests(auth -> auth
-                // OPTIONS requests වලට සැමවිටම අවසර දීම (CORS සඳහා)
                 .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
                 .requestMatchers("/", "/login**", "/error**", "/oauth2/**", "/api/auth/**", "/api/resources/**","/api/tickets/**").permitAll()
-                
-                // පරීක්ෂා කිරීමේ පහසුව සඳහා notifications endpoint එක දැනට permitAll කිරීම
                 .requestMatchers("/api/notifications/**").permitAll()
-                
                 .requestMatchers("/api/bookings/**", "/api/users/me", "/api/users/by-email").authenticated()
                 .anyRequest().authenticated()
             )
@@ -107,13 +104,23 @@ public class WebSecurityConfig {
             .oauth2Login(oauth2 -> oauth2
                 .successHandler((request, response, authentication) -> {
                     OAuth2User oAuth2User = (OAuth2User) authentication.getPrincipal();
-                    userService.processOAuthPostLogin(
-                        oAuth2User.getAttribute("email"), 
-                        oAuth2User.getAttribute("name"), 
-                        oAuth2User.getAttribute("picture"), 
-                        oAuth2User.getAttribute("sub")
+                    
+                    String email = oAuth2User.getAttribute("email");
+                    String name = oAuth2User.getAttribute("name");
+                    String picture = oAuth2User.getAttribute("picture");
+                    String sub = oAuth2User.getAttribute("sub");
+
+                    userService.processOAuthPostLogin(email, name, picture, sub);
+
+                    // Redirect to frontend with user data in URL parameters
+                    String redirectUrl = String.format(
+                        "http://localhost:5173/?token=google-auth&name=%s&email=%s&picture=%s",
+                        URLEncoder.encode(name != null ? name : "", StandardCharsets.UTF_8),
+                        URLEncoder.encode(email != null ? email : "", StandardCharsets.UTF_8),
+                        URLEncoder.encode(picture != null ? picture : "", StandardCharsets.UTF_8)
                     );
-                    response.sendRedirect("http://localhost:5173/");
+                    
+                    response.sendRedirect(redirectUrl);
                 })
             )
             .logout(logout -> logout

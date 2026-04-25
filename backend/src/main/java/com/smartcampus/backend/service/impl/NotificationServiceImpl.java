@@ -14,23 +14,21 @@ public class NotificationServiceImpl implements NotificationService {
     @Autowired
     private NotificationRepository notificationRepository;
 
-    // 1. පවතින Method එක (User Side එක සඳහා - වෙනස් කර නැත)
+   
     @Override
     public void createNotification(String email, String message, String type, String referenceId) {
         Notification notification = new Notification(email, message, type, referenceId);
         notificationRepository.save(notification);
     }
 
-    // --- Admin සඳහා අලුතින් එක් කළ කොටස (START) ---
-
-    // 2. Admin විසින් පණිවිඩ යැවීමේදී (senderEmail සහිතව) භාවිතා කරන Overloaded Method එක
+ 
     @Override
     public void createNotification(String email, String senderEmail, String message, String type, String referenceId) {
         Notification notification = new Notification(email, senderEmail, message, type, referenceId);
         notificationRepository.save(notification);
     }
 
-    // 3. Admin විසින් පණිවිඩයක් Update කිරීමේදී භාවිතා කරන Method එක
+
     @Override
     public Notification updateNotification(String id, String newMessage) {
         Notification notification = notificationRepository.findById(id)
@@ -39,14 +37,14 @@ public class NotificationServiceImpl implements NotificationService {
         return notificationRepository.save(notification);
     }
 
-    // 4. Admin Alerts (Booking requests වැනි දේ) ලබා ගැනීම සඳහා එක් කළ Method එක
+  
     @Override
     public List<Notification> getAdminAlerts() {
-        // මෙහිදී 'ALERT' type එක සහිත සියලුම notifications ලබා ගනී (Booking Requests මෙයට අයත් වේ)
+    
         return notificationRepository.findByTypeOrderByCreatedAtDesc("ALERT");
     }
 
-    // --- Admin සඳහා අලුතින් එක් කළ කොටස (END) ---
+
 
     @Override
     public List<Notification> getNotificationsForUser(String email) {

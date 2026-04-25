@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { 
   Search, RefreshCcw, Bell, ChevronDown, ShieldCheck, 
-  Trash2, CheckCheck, Inbox, Clock 
+  Trash2, CheckCheck, Inbox, Clock, User, Settings, LogOut 
 } from 'lucide-react';
 
 const AdminHeader = ({ searchTerm, setSearchTerm, fetchUsers, loading }) => {
@@ -11,6 +11,9 @@ const AdminHeader = ({ searchTerm, setSearchTerm, fetchUsers, loading }) => {
   const [showNotifications, setShowNotifications] = useState(false);
   const [notifications, setNotifications] = useState([]);
   const [unreadCount, setUnreadCount] = useState(0);
+  
+  // New state for Profile Menu
+  const [showProfileMenu, setShowProfileMenu] = useState(false);
 
   useEffect(() => {
     const userJson = localStorage.getItem('user');
@@ -23,7 +26,7 @@ const AdminHeader = ({ searchTerm, setSearchTerm, fetchUsers, loading }) => {
       }
     }
     fetchNotifications();
-    const interval = setInterval(fetchNotifications, 30000); // සෑම තත්පර 30කට වරක් auto sync වේ
+    const interval = setInterval(fetchNotifications, 30000);
     return () => clearInterval(interval);
   }, []);
 
@@ -57,6 +60,11 @@ const AdminHeader = ({ searchTerm, setSearchTerm, fetchUsers, loading }) => {
         console.error("Failed to clear notifications", err);
       }
     }
+  };
+
+  const handleLogout = () => {
+    localStorage.removeItem('user');
+    window.location.href = '/login';
   };
 
   return (
@@ -96,7 +104,10 @@ const AdminHeader = ({ searchTerm, setSearchTerm, fetchUsers, loading }) => {
           {/* --- Notification Bell & Dropdown --- */}
           <div className="relative">
             <button 
-              onClick={() => setShowNotifications(!showNotifications)}
+              onClick={() => {
+                setShowNotifications(!showNotifications);
+                setShowProfileMenu(false); // Close profile when notifications open
+              }}
               className={`w-12 h-12 flex items-center justify-center rounded-xl transition-all border relative group ${
                 showNotifications ? "bg-[#0c5252] text-white" : "bg-slate-50 text-slate-400 hover:text-[#0c5252] hover:bg-slate-100 border-slate-200/50"
               }`}
@@ -174,13 +185,51 @@ const AdminHeader = ({ searchTerm, setSearchTerm, fetchUsers, loading }) => {
             </p>
           </div>
 
-          <div className="relative group">
-            <button className="flex items-center gap-3 p-1 bg-slate-50 border border-slate-200 rounded-[20px] pr-4 hover:bg-white hover:border-[#ebc070]/50 transition-all duration-300 shadow-sm">
+          <div className="relative">
+            <button 
+              onClick={() => {
+                setShowProfileMenu(!showProfileMenu);
+                setShowNotifications(false); // Close notifications when profile opens
+              }}
+              className="flex items-center gap-3 p-1 bg-slate-50 border border-slate-200 rounded-[20px] pr-4 hover:bg-white hover:border-[#ebc070]/50 transition-all duration-300 shadow-sm group"
+            >
               <div className="w-10 h-10 bg-gradient-to-tr from-[#ebc070] to-[#f3d393] rounded-[15px] flex items-center justify-center text-[#0c5252] shadow-md font-black text-lg transform group-hover:scale-105 transition-transform">
                 {adminName.charAt(0).toUpperCase()}
               </div>
-              <ChevronDown size={14} className="text-slate-400 group-hover:text-[#0c5252] transition-colors" />
+              <ChevronDown size={14} className={`text-slate-400 group-hover:text-[#0c5252] transition-all ${showProfileMenu ? 'rotate-180' : ''}`} />
             </button>
+
+            {showProfileMenu && (
+              <div className="absolute right-0 mt-4 w-72 bg-[#0c5252] border border-white/10 rounded-[25px] shadow-2xl p-3 backdrop-blur-3xl z-[110] animate-in fade-in zoom-in duration-200">
+                <div className="px-6 py-4 mb-2 bg-white/5 rounded-[20px] border border-white/5 flex items-center gap-4">
+                  <div className="w-10 h-10 bg-[#ebc070] rounded-xl flex items-center justify-center text-[#0c5252] font-black text-lg">
+                    {adminName.charAt(0).toUpperCase()}
+                  </div>
+                  <div className="overflow-hidden">
+                    <p className="text-[9px] text-[#ebc070] font-black uppercase tracking-[0.2em] mb-0.5">Active</p>
+                    <p className="text-white font-black text-sm truncate uppercase">{adminName}</p>
+                  </div>
+                </div>
+                
+                <div className="grid grid-cols-1 gap-1">
+                  <a href="/profile" onClick={() => setShowProfileMenu(false)} className="flex items-center gap-4 px-5 py-3 text-white/60 hover:bg-[#ebc070] hover:text-[#0c5252] transition-all rounded-[15px] group">
+                    <User size={18} /> 
+                    <span className="text-[11px] font-black uppercase tracking-[0.1em]">Profile Overview</span>
+                  </a>
+                  <a href="/settings" onClick={() => setShowProfileMenu(false)} className="flex items-center gap-4 px-5 py-3 text-white/60 hover:bg-[#ebc070] hover:text-[#0c5252] transition-all rounded-[15px] group">
+                    <Settings size={18} /> 
+                    <span className="text-[11px] font-black uppercase tracking-[0.1em]">Settings</span>
+                  </a>
+                </div>
+
+                <div className="h-[1px] bg-white/10 my-2 mx-4"></div>
+
+                <button onClick={handleLogout} className="flex items-center gap-4 px-5 py-4 w-full text-rose-400 hover:bg-rose-500/10 transition-all rounded-[15px] text-left">
+                  <LogOut size={18} /> 
+                  <span className="text-[11px] font-black uppercase tracking-[0.1em]">Logout</span>
+                </button>
+              </div>
+            )}
             <div className="absolute inset-0 bg-[#ebc070]/20 blur-xl rounded-full opacity-0 group-hover:opacity-30 transition-opacity -z-10"></div>
           </div>
         </div>

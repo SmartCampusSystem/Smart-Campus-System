@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Mail, Lock, User, Loader2, Eye, EyeOff, ArrowRight, ShieldCheck, Fingerprint, Globe, CheckCircle } from 'lucide-react';
+import { Mail, Lock, User, Loader2, Eye, EyeOff, ArrowRight, ShieldCheck, Fingerprint, Globe, CheckCircle, AlertCircle, CheckCircle2 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { useNavigate, Link } from 'react-router-dom';
 
@@ -9,22 +9,70 @@ function Register() {
     email: '',
     password: '',
   });
+  
+  // Validation States
+  const [errors, setErrors] = useState({ name: '', email: '', password: '' });
+  const [touched, setTouched] = useState({ name: false, email: false, password: false });
+
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
+
+  // Validation Logic
+  const validateField = (name, value) => {
+    switch (name) {
+      case 'name':
+        if (!value) return 'Full name is required';
+        if (/[0-9]/.test(value)) return 'Name cannot contain numbers';
+        return '';
+      case 'email':
+        if (!value) return 'Email is required';
+        if (!/\S+@\S+\.\S+/.test(value)) return 'Enter a valid email address';
+        return '';
+      case 'password':
+        if (!value) return 'Password is required';
+        if (value.length < 6) return 'Password must be at least 6 characters';
+        return '';
+      default:
+        return '';
+    }
+  };
 
   const handleGoogleSignUp = () => {
     window.location.href = 'http://localhost:8082/oauth2/authorization/google';
   };
 
   const handleChange = (e) => {
-    setFormData({ ...formData, [e.target.name]: e.target.value });
+    const { name, value } = e.target;
+    
+    // නම සඳහා ඉලක්කම් ඇතුළත් කිරීම වැලැක්වීම (Block numbers in real-time)
+    if (name === 'name' && /[0-9]/.test(value)) return;
+
+    setFormData({ ...formData, [name]: value });
+    
+    if (touched[name]) {
+      setErrors(prev => ({ ...prev, [name]: validateField(name, value) }));
+    }
+  };
+
+  const handleBlur = (e) => {
+    const { name, value } = e.target;
+    setTouched(prev => ({ ...prev, [name]: true }));
+    setErrors(prev => ({ ...prev, [name]: validateField(name, value) }));
   };
 
   const handleRegister = async (e) => {
     e.preventDefault();
-    if (formData.password.length < 6) {
-      toast.error('Password must be at least 6 characters long');
+    
+    // Final check before submission
+    const nameErr = validateField('name', formData.name);
+    const emailErr = validateField('email', formData.email);
+    const passErr = validateField('password', formData.password);
+
+    if (nameErr || emailErr || passErr) {
+      setErrors({ name: nameErr, email: emailErr, password: passErr });
+      setTouched({ name: true, email: true, password: true });
+      toast.error('Please fix the errors in the form');
       return;
     }
 
@@ -38,14 +86,8 @@ function Register() {
 
       if (response.ok) {
         toast.success('Registration Successful!');
-        
-        // --- Navbar එකට දැනුම් දීම (Auth Change) ---
-        // සාමාන්‍යයෙන් register වුණාම token එකක් ලැබෙන්නේ නැති නිසා මෙතනදී login එකට navigate කරනවා.
-        // නමුත් පද්ධතියේ වෙනසක් වුණ බව දැනුම් දීමට event එක trigger කරනවා.
         window.dispatchEvent(new Event("authChange"));
         window.dispatchEvent(new Event("storage"));
-        // ----------------------------------------
-
         navigate('/login');
       } else {
         const errorText = await response.text();
@@ -63,13 +105,9 @@ function Register() {
       
       {/* --- Left Section: Registration Interface --- */}
       <section className="relative w-full md:w-[35%] lg:w-[30%] bg-white flex flex-col z-30 border-r border-slate-100">
-        
-        {/* Branding Line */}
         <div className="h-1.5 w-full bg-[#0c5252]"></div>
 
         <div className="flex-1 px-10 py-6 flex flex-col justify-between overflow-hidden">
-          
-          {/* Logo */}
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 bg-[#0c5252] rounded-xl flex items-center justify-center shadow-lg shadow-[#0c5252]/20">
               <ShieldCheck className="text-white" size={22} />
@@ -80,7 +118,6 @@ function Register() {
             </div>
           </div>
 
-          {/* Registration Form Container */}
           <div className="w-full max-w-sm mx-auto">
             <header className="mb-6">
               <div className="inline-flex items-center gap-2 px-2.5 py-1 rounded-full bg-[#f0f4f4] text-[#0c5252] text-[10px] font-bold uppercase tracking-widest mb-3">
@@ -93,7 +130,6 @@ function Register() {
             </header>
 
             <div className="space-y-4">
-              {/* Google Button */}
               <button 
                 onClick={handleGoogleSignUp}
                 className="w-full flex items-center justify-center gap-3 py-2.5 bg-white hover:bg-slate-50 border border-slate-200 rounded-xl font-bold text-slate-700 text-sm transition-all active:scale-[0.98]"
@@ -108,61 +144,91 @@ function Register() {
                 <div className="flex-grow border-t border-slate-100"></div>
               </div>
 
-              <form onSubmit={handleRegister} className="space-y-3">
+              <form onSubmit={handleRegister} className="space-y-3" noValidate>
+                {/* Name Field */}
                 <div className="space-y-1">
-                  <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest ml-1">Full Name</label>
+                  <div className="flex justify-between items-center ml-1">
+                    <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Full Name</label>
+                    {touched.name && !errors.name && formData.name && <CheckCircle2 size={12} className="text-emerald-500" />}
+                  </div>
                   <div className="relative group">
-                    <User className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-[#0c5252] transition-colors" size={16} />
+                    <User className={`absolute left-4 top-1/2 -translate-y-1/2 transition-colors ${errors.name && touched.name ? 'text-red-400' : 'text-slate-400 group-focus-within:text-[#0c5252]'}`} size={16} />
                     <input
-                      className="w-full pl-11 pr-4 py-2.5 bg-slate-50 border border-transparent focus:border-[#0c5252]/20 focus:bg-white focus:ring-4 focus:ring-[#0c5252]/5 rounded-xl text-slate-900 font-semibold transition-all outline-none text-sm"
+                      className={`w-full pl-11 pr-4 py-2.5 border rounded-xl font-semibold transition-all outline-none text-sm ${
+                        errors.name && touched.name 
+                        ? 'bg-red-50 border-red-200 focus:border-red-300' 
+                        : 'bg-slate-50 border-transparent focus:border-[#0c5252]/20 focus:bg-white'
+                      }`}
                       type="text"
                       name="name"
                       placeholder="Your Name"
                       value={formData.name}
                       onChange={handleChange}
+                      onBlur={handleBlur}
                       required
                     />
                   </div>
+                  {errors.name && touched.name && <p className="text-[10px] text-red-500 font-bold flex items-center gap-1 mt-1 ml-1 animate-in fade-in slide-in-from-top-1"><AlertCircle size={10} /> {errors.name}</p>}
                 </div>
 
+                {/* Email Field */}
                 <div className="space-y-1">
-                  <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest ml-1">Email Address</label>
+                  <div className="flex justify-between items-center ml-1">
+                    <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Email Address</label>
+                    {touched.email && !errors.email && formData.email && <CheckCircle2 size={12} className="text-emerald-500" />}
+                  </div>
                   <div className="relative group">
-                    <Mail className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-[#0c5252] transition-colors" size={16} />
+                    <Mail className={`absolute left-4 top-1/2 -translate-y-1/2 transition-colors ${errors.email && touched.email ? 'text-red-400' : 'text-slate-400 group-focus-within:text-[#0c5252]'}`} size={16} />
                     <input
-                      className="w-full pl-11 pr-4 py-2.5 bg-slate-50 border border-transparent focus:border-[#0c5252]/20 focus:bg-white focus:ring-4 focus:ring-[#0c5252]/5 rounded-xl text-slate-900 font-semibold transition-all outline-none text-sm"
+                      className={`w-full pl-11 pr-4 py-2.5 border rounded-xl font-semibold transition-all outline-none text-sm ${
+                        errors.email && touched.email 
+                        ? 'bg-red-50 border-red-200 focus:border-red-300' 
+                        : 'bg-slate-50 border-transparent focus:border-[#0c5252]/20 focus:bg-white'
+                      }`}
                       type="email"
                       name="email"
                       placeholder="name@campus.ac.lk"
                       value={formData.email}
                       onChange={handleChange}
+                      onBlur={handleBlur}
                       required
                     />
                   </div>
+                  {errors.email && touched.email && <p className="text-[10px] text-red-500 font-bold flex items-center gap-1 mt-1 ml-1 animate-in fade-in slide-in-from-top-1"><AlertCircle size={10} /> {errors.email}</p>}
                 </div>
 
+                {/* Password Field */}
                 <div className="space-y-1">
-                  <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest ml-1">Password</label>
+                  <div className="flex justify-between items-center ml-1">
+                    <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Password</label>
+                    {touched.password && !errors.password && formData.password && <CheckCircle2 size={12} className="text-emerald-500" />}
+                  </div>
                   <div className="relative group">
-                    <Lock className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-[#0c5252] transition-colors" size={16} />
+                    <Lock className={`absolute left-4 top-1/2 -translate-y-1/2 transition-colors ${errors.password && touched.password ? 'text-red-400' : 'text-slate-400 group-focus-within:text-[#0c5252]'}`} size={16} />
                     <input
-                      className="w-full pl-11 pr-11 py-2.5 bg-slate-50 border border-transparent focus:border-[#0c5252]/20 focus:bg-white focus:ring-4 focus:ring-[#0c5252]/5 rounded-xl text-slate-900 font-semibold transition-all outline-none text-sm"
+                      className={`w-full pl-11 pr-11 py-2.5 border rounded-xl font-semibold transition-all outline-none text-sm ${
+                        errors.password && touched.password 
+                        ? 'bg-red-50 border-red-200 focus:border-red-300' 
+                        : 'bg-slate-50 border-transparent focus:border-[#0c5252]/20 focus:bg-white'
+                      }`}
                       type={showPassword ? "text" : "password"}
                       name="password"
                       placeholder="At least 6 characters"
                       value={formData.password}
                       onChange={handleChange}
+                      onBlur={handleBlur}
                       required
                     />
                     <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-[#0c5252]">
                       {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
                     </button>
                   </div>
+                  {errors.password && touched.password && <p className="text-[10px] text-red-500 font-bold flex items-center gap-1 mt-1 ml-1 animate-in fade-in slide-in-from-top-1"><AlertCircle size={10} /> {errors.password}</p>}
                 </div>
 
                 <button 
                   disabled={loading}
-                  className="w-full py-3 bg-[#0c5252] text-white font-bold text-xs uppercase tracking-widest rounded-xl shadow-lg shadow-[#0c5252]/20 hover:bg-[#154646] transition-all flex items-center justify-center gap-2 mt-2"
+                  className="w-full py-3 bg-[#0c5252] text-white font-bold text-xs uppercase tracking-widest rounded-xl shadow-lg shadow-[#0c5252]/20 hover:bg-[#154646] transition-all flex items-center justify-center gap-2 mt-2 active:scale-95 disabled:opacity-70 disabled:active:scale-100"
                   type="submit"
                 >
                   {loading ? <Loader2 className="animate-spin" size={18} /> : (
@@ -183,12 +249,10 @@ function Register() {
 
       {/* --- Right Section: Professional Showcase --- */}
       <section className="hidden md:flex flex-1 relative flex-col items-center justify-center p-12 bg-[#0c5252] overflow-hidden">
-        
         <div className="absolute top-[-15%] right-[-5%] w-[600px] h-[600px] bg-[#2d6a6a] opacity-25 blur-[120px] rounded-full"></div>
         <div className="absolute bottom-[-10%] left-[-10%] w-[400px] h-[400px] bg-[#7c5c14] opacity-15 blur-[100px] rounded-full"></div>
         
         <div className="relative w-full max-w-4xl z-10 flex flex-col justify-center h-full">
-          
           <div className="relative rounded-[32px] overflow-hidden shadow-2xl border border-white/10 bg-white">
             <div className="px-8 py-3 flex items-center justify-between bg-slate-50 border-b border-slate-100">
               <div className="flex gap-1.5">
@@ -201,7 +265,7 @@ function Register() {
             
             <div className="aspect-video relative group">
               <img 
-                src="https://images.unsplash.com/photo-1451187580459-43490279c0fa?auto=format&fit=crop&q=80&w=2072" 
+                src="https://images.unsplash.com/photo-1562774053-701939374585?q=80&w=1986&auto=format&fit=crop" 
                 className="w-full h-full object-cover" 
                 alt="Architecture" 
               />

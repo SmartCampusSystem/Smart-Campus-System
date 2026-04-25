@@ -13,6 +13,8 @@ import Tickets from './pages/client/Tickets';
 import TechnicianDashboard from './pages/technician/TechnicianDashboard';
 import NotificationPage from './pages/client/NotificationPage';
 import ProfilePage from './pages/client/ProfilePage';
+import BookingDetails from './pages/client/BookingsDetails';
+import AdminBookingDetails from './pages/admin/AdminBookingDetails';
 
 
 
@@ -34,6 +36,8 @@ function App() {
         <Route path="/tickets" element={<Tickets />} />
         <Route path="/notifications" element={<NotificationPage />} />
         <Route path="/profile" element={<ProfilePage />} />
+        <Route path="/bookings/:id" element={<BookingDetails />} />
+        <Route path="/admin/bookings/:id" element={<AdminBookingDetails />} />
         
       </Routes>
     </BrowserRouter>

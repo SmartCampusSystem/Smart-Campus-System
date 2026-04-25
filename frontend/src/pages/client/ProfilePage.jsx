@@ -139,7 +139,7 @@ const ProfilePage = () => {
                   </button>
                 ))}
                 <button 
-                  onClick={() => handleNavigation('/logout')}
+                  onClick={() => handleNavigation('/login')}
                   className="w-full flex items-center gap-4 p-4 rounded-2xl text-rose-500 hover:bg-rose-50 transition-all font-bold text-sm mt-4"
                 >
                   <LogOut size={20} /> Logout

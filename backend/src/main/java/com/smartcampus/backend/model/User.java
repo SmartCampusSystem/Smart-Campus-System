@@ -1,20 +1,36 @@
 package com.smartcampus.backend.model;
 
-import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
-import jakarta.persistence.Table;
-import lombok.Data;
+import lombok.*;
+import org.springframework.data.annotation.Id;
+import org.springframework.data.mongodb.core.index.Indexed;
+import org.springframework.data.mongodb.core.mapping.Document;
+import org.springframework.data.annotation.CreatedDate;
+import java.time.LocalDateTime;
 
-@Entity
-@Table(name = "users") 
-@Data
+@Document(collection = "users") 
+@Getter @Setter
+@NoArgsConstructor
+@AllArgsConstructor
 public class User {
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+
+    @Id 
+    private String id;
+
     private String name;
+
+    @Indexed(unique = true) 
     private String email;
-    private String imageUrl; 
+
+    private String password; 
+
+    private String picture;
+
+    private Role role; // ADMIN, USER, TECHNICIAN
+
+    private String provider; 
+
+    private String providerId; 
+
+    @CreatedDate 
+    private LocalDateTime createdAt; 
 }
